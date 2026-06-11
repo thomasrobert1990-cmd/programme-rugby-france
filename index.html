@@ -43,6 +43,7 @@ header{background:linear-gradient(135deg,#0a0d14,#001a4a,#1a000a);border-bottom:
 .pb.p-non{background:rgba(184,32,32,.4);border-color:#b82020;color:#ffaaaa}
 .pb.p-scan{background:rgba(144,176,240,.3);border-color:#90b0f0;color:#c0d8ff}
 .pb.p-club{background:rgba(212,160,40,.3);border-color:#d4a028;color:#f5d060}
+.pb.p-france{background:rgba(0,35,149,.4);border-color:#002395;color:#7090ff}
 .btn-reset{display:block;width:100%;margin-top:8px;padding:7px;background:rgba(180,32,32,.1);border:1px solid rgba(184,32,32,.3);color:#e06060;border-radius:5px;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif}
 .main{flex:1;padding:16px 20px;overflow-y:auto}
 .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
@@ -170,6 +171,7 @@ textarea.fi{resize:vertical;min-height:58px}
     <div class="fg"><span class="fl">P&#233;riode</span><div class="rrow"><input type="text" id="f-y1" placeholder="1906" maxlength="4"><span>&#8594;</span><input type="text" id="f-y2" placeholder="2026" maxlength="4"></div></div>
     <div class="fg"><span class="fl">Possession</span><div class="pbtns">
       <button class="pb p-all" id="pb-all" onclick="setProg('all')">Tous</button>
+      <button class="pb" id="pb-france" onclick="setProg('france')">&#127981; France</button>
       <button class="pb" id="pb-oui" onclick="setProg('oui')">&#10003; Collection</button>
       <button class="pb" id="pb-non" onclick="setProg('non')">&#10007; Manquants</button>
       <button class="pb" id="pb-scan" onclick="setProg('scan')">&#128247; Scann&#233;s</button>
@@ -376,7 +378,7 @@ function dn(d){if(!d)return 0;var p=d.split('/');return p.length===3?+p[2]*10000
 
 function setProg(v){
   pf=v;
-  ['all','oui','non','scan','club'].forEach(function(x){var el=document.getElementById('pb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
+  ['all','france','oui','non','scan','club'].forEach(function(x){var el=document.getElementById('pb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
   curPage=1;applyF();
 }
 
@@ -393,6 +395,7 @@ function applyF(){
     if(pf==='non'&&m.programme)return false;
     if(pf==='scan'&&(!m.image_couverture||!m.image_couverture.trim()))return false;
     if(pf==='club'&&m.categorie!=='club')return false;
+    if(pf==='france'&&m.categorie==='club')return false;
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
     if(t&&m.domicile!==t&&m.exterieur!==t)return false;
     if(e&&m.etat!==e)return false;
