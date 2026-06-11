@@ -171,11 +171,9 @@ textarea.fi{resize:vertical;min-height:58px}
     <div class="fg"><span class="fl">P&#233;riode</span><div class="rrow"><input type="text" id="f-y1" placeholder="1906" maxlength="4"><span>&#8594;</span><input type="text" id="f-y2" placeholder="2026" maxlength="4"></div></div>
     <div class="fg"><span class="fl">Possession</span><div class="pbtns">
       <button class="pb p-all" id="pb-all" onclick="setProg('all')">Tous</button>
-      <button class="pb" id="pb-france" onclick="setProg('france')">&#127981; France</button>
       <button class="pb" id="pb-oui" onclick="setProg('oui')">&#10003; Collection</button>
       <button class="pb" id="pb-non" onclick="setProg('non')">&#10007; Manquants</button>
       <button class="pb" id="pb-scan" onclick="setProg('scan')">&#128247; Scann&#233;s</button>
-      <button class="pb" id="pb-club" onclick="setProg('club')">&#127942; Clubs</button>
     </div></div>
     <div class="fg"><span class="fl">&#201;tat</span><select id="f-e"><option value="">Tous</option><option>Excellent</option><option>Tr&#232;s bon</option><option>Bon</option><option>Moyen</option><option>Mauvais</option></select></div>
     <div class="fg"><span class="fl">Lieu</span><input type="text" id="f-l" placeholder="France, Twickenham..."></div>
@@ -200,6 +198,34 @@ textarea.fi{resize:vertical;min-height:58px}
     </div>
     <div class="grid" id="grid"></div>
     <div class="pag" id="pag"></div>
+  </main>
+</div>
+
+<div class="app" id="view-club" style="display:none">
+  <aside class="sidebar" id="sidebar-club">
+    <div class="sb-t">&#128269; Filtres</div>
+    <div class="fg"><span class="fl">Recherche</span><input type="text" id="cf-s" placeholder="&#201;quipe, lieu..."></div>
+    <div class="fg"><span class="fl">P&#233;riode</span><div class="rrow"><input type="text" id="cf-y1" placeholder="1892" maxlength="4"><span>&#8594;</span><input type="text" id="cf-y2" placeholder="2025" maxlength="4"></div></div>
+    <div class="fg"><span class="fl">Possession</span><div class="pbtns">
+      <button class="pb p-all" id="cpb-all" onclick="setClubProg('all')">Tous</button>
+      <button class="pb" id="cpb-oui" onclick="setClubProg('oui')">&#10003; Collection</button>
+      <button class="pb" id="cpb-non" onclick="setClubProg('non')">&#10007; Manquants</button>
+    </div></div>
+    <button class="btn-reset" onclick="resetClubF()">&#10005; Effacer</button>
+  </aside>
+  <main class="main">
+    <div class="toolbar">
+      <div class="rc"><strong id="ccnt">&#8212;</strong> r&#233;sultats</div>
+      <div class="tr"><label>Trier&#160;:</label>
+        <select id="csrt" onchange="applyClubF()">
+          <option value="da">Date &#8593;</option>
+          <option value="dd">Date &#8595;</option>
+          <option value="az">Match A&#8594;Z</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid" id="cgrid"></div>
+    <div class="pag" id="cpag"></div>
   </main>
 </div>
 
@@ -328,15 +354,18 @@ var impFiles=[],impRes=[],impTabCur='all';
 
 /* TAB SWITCH */
 function switchTab(t){
-  var isCol=(t==0||t==='col'),isStats=(t==1||t==='stats'),isMap=(t==2||t==='map');
+  var isCol=(t==0||t==='col'),isStats=(t==1||t==='stats'),isMap=(t==2||t==='map'),isClub=(t==3||t==='club');
   document.getElementById('view-col').style.display=isCol?'flex':'none';
   document.getElementById('view-stats').style.display=isStats?'block':'none';
   document.getElementById('view-map').style.display=isMap?'block':'none';
+  document.getElementById('view-club').style.display=isClub?'flex':'none';
   document.getElementById('tab-col').classList.toggle('on',isCol);
   document.getElementById('tab-stats').classList.toggle('on',isStats);
   var tm=document.getElementById('tab-map');if(tm)tm.classList.toggle('on',isMap);
+  var tc=document.getElementById('tab-club');if(tc)tc.classList.toggle('on',isClub);
   if(isStats)renderStats();
   if(isMap)renderMapTimeline();
+  if(isClub){applyClubF();if(!document.getElementById('cgrid').innerHTML)applyClubF();}
 }
 
 /* COLLECTION */
@@ -378,7 +407,7 @@ function dn(d){if(!d)return 0;var p=d.split('/');return p.length===3?+p[2]*10000
 
 function setProg(v){
   pf=v;
-  ['all','france','oui','non','scan','club'].forEach(function(x){var el=document.getElementById('pb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
+  ['all','oui','non','scan'].forEach(function(x){var el=document.getElementById('pb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
   curPage=1;applyF();
 }
 
@@ -394,8 +423,7 @@ function applyF(){
     if(pf==='oui'&&!m.programme)return false;
     if(pf==='non'&&m.programme)return false;
     if(pf==='scan'&&(!m.image_couverture||!m.image_couverture.trim()))return false;
-    if(pf==='club'&&m.categorie!=='club')return false;
-    if(pf==='france'&&m.categorie==='club')return false;
+    if(m.categorie==='club')return false;
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
     if(t&&m.domicile!==t&&m.exterieur!==t)return false;
     if(e&&m.etat!==e)return false;
@@ -1231,6 +1259,92 @@ function buildTimeline() {
 
   document.getElementById('tl-inner').innerHTML = h;
 }
+
+
+/* ===== CLUB TAB ===== */
+var clubFiltered=[], clubPage=1, clubPf='all';
+
+function setClubProg(v){
+  clubPf=v;
+  ['all','oui','non'].forEach(function(x){var el=document.getElementById('cpb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
+  clubPage=1;applyClubF();
+}
+
+function applyClubF(){
+  var s=(document.getElementById('cf-s')||{}).value||'';
+  s=nm(s.trim());
+  var y1=+(document.getElementById('cf-y1')||{}).value||1800;
+  var y2=+(document.getElementById('cf-y2')||{}).value||2100;
+  var srt=(document.getElementById('csrt')||{}).value||'da';
+  clubFiltered=allData.filter(function(m){
+    if(m.categorie!=='club')return false;
+    if(clubPf==='oui'&&!m.programme)return false;
+    if(clubPf==='non'&&m.programme)return false;
+    var yr=+m.year||0;if(yr<y1||yr>y2)return false;
+    if(s){var h=nm((m.match||'')+' '+(m.date||'')+' '+(m.lieu||''));if(h.indexOf(s)<0)return false;}
+    return true;
+  });
+  clubFiltered.sort(function(a,b){
+    if(srt==='da')return dn(a.date)-dn(b.date);
+    if(srt==='dd')return dn(b.date)-dn(a.date);
+    return(a.match||'').localeCompare(b.match||'','fr');
+  });
+  var ccnt=document.getElementById('ccnt');
+  if(ccnt)ccnt.textContent=clubFiltered.length;
+  renderClub();
+}
+
+function renderClub(){
+  var g=document.getElementById('cgrid');
+  if(!g)return;
+  if(!clubFiltered.length){g.innerHTML='<div class="no-res">&#127942; Aucune finale</div>';document.getElementById('cpag').innerHTML='';return;}
+  var start=(clubPage-1)*24,page=clubFiltered.slice(start,start+24);
+  g.innerHTML=page.map(function(m){
+    var img=m.image_couverture?'<img src="'+m.image_couverture+'" alt="">':'<span class="ni">&#127942;</span>';
+    var bp=m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>';
+    var ex='';
+    if(m.score||m.cote){
+      ex='<div style="display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap">';
+      if(m.cote)ex+='<span style="font-size:11px;color:var(--or2)">'+m.cote+'</span>';
+      ex+='</div>';
+    }
+    return'<div class="card" onclick="openModal('+m.id+')">'
+      +'<div class="ci" style="position:relative;background:linear-gradient(135deg,#2a1800,#1a1200)">'+img
+      +'<span style="position:absolute;top:6px;left:6px;background:rgba(212,160,40,.9);color:#111;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700">&#127942; Finale</span>'
+      +'</div>'
+      +'<div class="cb">'
+      +'<div class="cd">'+m.date+'</div>'
+      +'<div class="cm">'+m.match+'</div>'
+      +'<div class="cl">&#128205; '+(m.lieu||'&#8212;')+'</div>'
+      +'<div class="cf">'+bp+(m.score?'<span class="bs">'+m.score+'</span>':'')+'</div>'
+      +ex+'</div></div>';
+  }).join('');
+  // Pagination
+  var tot=Math.ceil(clubFiltered.length/24),pag=document.getElementById('cpag');
+  if(!pag)return;
+  if(tot<=1){pag.innerHTML='';return;}
+  var h='<button class="pgb" onclick="goClubP('+(clubPage-1)+')" '+(clubPage===1?'disabled':'')+'>&#8249;</button>';
+  for(var i=1;i<=tot;i++){
+    h+='<button class="pgb'+(i===clubPage?' on':'')+'" onclick="goClubP('+i+')">'+i+'</button>';
+  }
+  h+='<button class="pgb" onclick="goClubP('+(clubPage+1)+')" '+(clubPage===tot?'disabled':'')+'>&#8250;</button>';
+  pag.innerHTML=h;
+}
+
+function goClubP(p){var tot=Math.ceil(clubFiltered.length/24);if(p<1||p>tot)return;clubPage=p;renderClub();}
+
+function resetClubF(){
+  ['cf-s','cf-y1','cf-y2'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  setClubProg('all');
+}
+
+// Bind club filters
+document.addEventListener('DOMContentLoaded', function(){
+  ['cf-s','cf-y1','cf-y2'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.addEventListener('input',function(){clubPage=1;applyClubF();});
+  });
+});
 
 loadAll();
 </script>
