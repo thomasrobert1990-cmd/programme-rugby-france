@@ -218,6 +218,8 @@ textarea.fi{resize:vertical;min-height:58px}
     <div class="toolbar">
       <div class="rc"><strong id="ccnt">&#8212;</strong> r&#233;sultats</div>
       <div class="tr">
+        <button class="btn-o" onclick="exportXLSX('club')">&#11015; Excel</button>
+        <button class="btn-o" onclick="exportPDF('club')">&#11015; PDF</button>
         <button class="btn-b" onclick="openImport('club')">&#11014; Import scans</button>
         <label>Trier&#160;:</label>
         <select id="csrt" onchange="applyClubF()">
@@ -914,9 +916,12 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeZoom();
 function getExportData(filter) {
   var data = allData.filter(function(m) {
     if(filter === 'doublons') return m.quantite > 1;
-    if(filter === 'collection') return m.programme;
-    if(filter === 'manquants') return !m.programme;
-    return true; // filtered = current view
+    if(filter === 'collection') return m.programme && m.categorie !== 'club';
+    if(filter === 'manquants') return !m.programme && m.categorie !== 'club';
+    if(filter === 'club') return m.categorie === 'club';
+    if(filter === 'club_collection') return m.categorie === 'club' && m.programme;
+    if(filter === 'club_manquants') return m.categorie === 'club' && !m.programme;
+    return true;
   });
   return data;
 }
