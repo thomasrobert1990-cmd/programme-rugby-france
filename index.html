@@ -217,7 +217,9 @@ textarea.fi{resize:vertical;min-height:58px}
   <main class="main">
     <div class="toolbar">
       <div class="rc"><strong id="ccnt">&#8212;</strong> r&#233;sultats</div>
-      <div class="tr"><label>Trier&#160;:</label>
+      <div class="tr">
+        <button class="btn-b" onclick="openImport('club')">&#11014; Import scans</button>
+        <label>Trier&#160;:</label>
         <select id="csrt" onchange="applyClubF()">
           <option value="da">Date &#8593;</option>
           <option value="dd">Date &#8595;</option>
@@ -717,7 +719,15 @@ function toast(msg){
 }
 
 /* IMPORT */
-function openImport(){document.getElementById('imp').style.display='block';}
+function openImport(mode){
+  window._importMode = mode || 'france';
+  document.getElementById('imp').style.display='block';
+  // Reset state
+  impFiles=[];impRes=[];
+  document.getElementById('imp-s2').style.display='none';
+  document.getElementById('imp-s3').style.display='none';
+  document.getElementById('imp-ptxt').textContent='';
+}
 function closeImport(){document.getElementById('imp').style.display='none';}
 
 function impNm(s){
@@ -778,8 +788,12 @@ function impOnDone(){
 }
 
 function impMatch(){
+  var mode = window._importMode || 'france';
+  var sourceData = allData.filter(function(m){ 
+    return mode==='club' ? m.categorie==='club' : m.categorie!=='club'; 
+  });
   var bd={};
-  allData.forEach(function(m){if(!bd[m.date])bd[m.date]=[];bd[m.date].push(m);});
+  sourceData.forEach(function(m){if(!bd[m.date])bd[m.date]=[];bd[m.date].push(m);});
   impRes=[];
   impFiles.forEach(function(f){
     var p=f.p;
@@ -790,7 +804,7 @@ function impMatch(){
       cands.forEach(function(c){if(!found&&impTm(p.teams,c.domicile,c.exterieur)){found=c;st='ok';}});
       if(!found){found=cands[0];st='wn';}
     }else{
-      var yr=allData.filter(function(m){return m.year===p.yr;}),best=null,bs=0;
+      var yr=sourceData.filter(function(m){return m.year===p.yr;}),best=null,bs=0;
       yr.forEach(function(m){
         var sc=0;
         if(impNm(m.domicile).length>1&&impNm(p.teams).indexOf(impNm(m.domicile))>=0)sc++;
