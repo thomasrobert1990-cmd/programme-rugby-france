@@ -11,12 +11,12 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@400;600;700&display=swap');
-:root{--or:#c9a84c;--or2:#f0d080;--vert:#1a6b3c;--vert2:#2d9e5f;--fond:#111418;--carte:#1a1e24;--carte2:#22282f;--bord:#2a3040;--gris:#6a6a6a;--blanc:#f5f0e8}
+:root{--or:#e8c84c;--or2:#f5e080;--vert:#002395;--vert2:#1a3ab0;--fond:#0d1118;--carte:#141a24;--carte2:#1e2535;--bord:#1e2d4a;--gris:#6a7a8a;--blanc:#f0f4ff;--rouge:#ED2939;--rouge2:#ff4455}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Source Sans 3',sans-serif;background:var(--fond);color:var(--blanc);min-height:100vh}
-header{background:linear-gradient(135deg,#0a0e12,#1a2030,#0d1a0d);border-bottom:3px solid var(--or);height:58px;display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 2px 16px rgba(0,0,0,.5)}
+header{background:linear-gradient(135deg,#0a0d14,#001a4a,#1a000a);border-bottom:3px solid var(--rouge);height:58px;display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 2px 16px rgba(0,0,0,.5)}
 .logo{font-family:'Bebas Neue',cursive;font-size:24px;letter-spacing:3px;color:var(--or)}
-.logo b{color:var(--vert2)}
+.logo b{color:var(--rouge)}
 .hstats{display:flex;gap:14px;margin-left:auto}
 .hs{text-align:center;padding:3px 11px;background:rgba(255,255,255,.04);border-radius:14px;border:1px solid var(--bord)}
 .hs .v{display:block;font-family:'Bebas Neue',cursive;font-size:18px;color:var(--or);line-height:1}
@@ -24,7 +24,7 @@ header{background:linear-gradient(135deg,#0a0e12,#1a2030,#0d1a0d);border-bottom:
 .tabs-nav{display:flex;border-bottom:1px solid var(--bord);padding:0 20px;background:#13171d}
 .tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--gris);padding:12px 18px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:14px;font-weight:600;transition:all .15s;margin-bottom:-1px}
 .tab-btn:hover{color:var(--blanc)}
-.tab-btn.on{color:var(--or);border-bottom-color:var(--or)}
+.tab-btn.on{color:var(--rouge);border-bottom-color:var(--rouge)}
 .app{display:flex;min-height:calc(100vh - 106px)}
 .sidebar{width:248px;min-width:248px;background:#13171d;border-right:1px solid var(--bord);padding:14px 13px;overflow-y:auto;max-height:calc(100vh - 106px);position:sticky;top:106px}
 .sb-t{font-family:'Bebas Neue',cursive;letter-spacing:2px;font-size:13px;color:var(--or);text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--bord)}
@@ -50,13 +50,13 @@ header{background:linear-gradient(135deg,#0a0e12,#1a2030,#0d1a0d);border-bottom:
 .tr{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .tr label{font-size:12px;color:var(--gris)}
 .tr select{background:#1a1e24;border:1px solid var(--bord);color:var(--blanc);padding:5px 7px;border-radius:4px;font-size:13px;font-family:'Source Sans 3',sans-serif;outline:none}
-.btn{background:var(--vert);border:none;color:#fff;padding:8px 14px;border-radius:5px;cursor:pointer;font-family:'Bebas Neue',cursive;letter-spacing:1px;font-size:15px}
+.btn{background:var(--vert);border:none;color:#fff;padding:8px 14px;border-radius:5px;cursor:pointer;font-family:'Bebas Neue',cursive;letter-spacing:1px;font-size:15px;transition:.2s}
 .btn:hover{background:var(--vert2)}
 .btn-o{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.35);color:var(--or);padding:7px 11px;border-radius:5px;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif}
 .btn-b{background:rgba(144,176,240,.1);border:1px solid rgba(144,176,240,.35);color:#90b0f0;padding:7px 11px;border-radius:5px;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
 .card{background:var(--carte);border:1px solid var(--bord);border-radius:9px;overflow:hidden;cursor:pointer;transition:all .2s}
-.card:hover{border-color:var(--or);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.card:hover{border-color:var(--rouge);transform:translateY(-2px);box-shadow:0 6px 20px rgba(237,41,57,.2)}
 .ci{height:118px;background:linear-gradient(135deg,#1a2030,#0d1a0d);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border-bottom:1px solid var(--bord)}
 .ci img{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0}
 .ni{opacity:.18;font-size:48px}
@@ -66,7 +66,7 @@ header{background:linear-gradient(135deg,#0a0e12,#1a2030,#0d1a0d);border-bottom:
 .cl{font-size:11px;color:var(--gris);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cf{display:flex;align-items:center;justify-content:space-between;gap:5px;flex-wrap:wrap}
 .bp{font-size:11px;padding:2px 7px;border-radius:9px;font-weight:600}
-.bp.y{background:rgba(26,107,60,.35);color:#5de895;border:1px solid rgba(45,158,95,.4)}
+.bp.y{background:rgba(0,35,149,.35);color:#7090ff;border:1px solid rgba(26,58,176,.4)}
 .bp.n{background:rgba(100,60,60,.2);color:#a07070;border:1px solid rgba(150,80,80,.3)}
 .bs{font-family:'Bebas Neue',cursive;font-size:15px;color:var(--or)}
 .pag{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:20px;flex-wrap:wrap}
@@ -76,9 +76,9 @@ header{background:linear-gradient(135deg,#0a0e12,#1a2030,#0d1a0d);border-bottom:
 .no-res{text-align:center;padding:60px;color:var(--gris);grid-column:1/-1}
 .err-box{background:rgba(184,32,32,.1);border:1px solid rgba(184,32,32,.3);border-radius:8px;padding:14px;color:#e06060;font-size:14px;grid-column:1/-1}
 .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;overflow-y:auto;padding:16px}
-.modal{background:#16191f;border:1px solid var(--or);border-radius:12px;width:100%;max-width:650px;margin:40px auto;overflow:hidden;animation:su .2s ease}
+.modal{background:#141a24;border:1px solid var(--rouge);border-radius:12px;width:100%;max-width:650px;margin:40px auto;overflow:hidden;animation:su .2s ease}
 @keyframes su{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
-.mh{background:linear-gradient(135deg,#0a0e12,#1a2030);padding:16px 20px 12px;border-bottom:2px solid var(--or);position:relative}
+.mh{background:linear-gradient(135deg,#0a0d14,#001a4a);padding:16px 20px 12px;border-bottom:2px solid var(--rouge);position:relative}
 .mt{font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:var(--or);line-height:1;margin-bottom:2px}
 .ms{font-size:12px;color:var(--gris)}
 .mc{position:absolute;top:12px;right:16px;background:none;border:1px solid var(--bord);color:var(--gris);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
@@ -146,7 +146,7 @@ textarea.fi{resize:vertical;min-height:58px}
 <body>
 
 <header>
-  <div class="logo">&#127944; Ma <b>Collection</b> Rugby</div>
+  <div class="logo">&#127945; Ma <b>Collection</b> Rugby</div>
   <div class="hstats">
     <div class="hs"><span class="v" id="ht">&#8212;</span><span class="l">Total</span></div>
     <div class="hs"><span class="v" id="hp">&#8212;</span><span class="l">Programmes</span></div>
@@ -156,7 +156,7 @@ textarea.fi{resize:vertical;min-height:58px}
 </header>
 
 <div class="tabs-nav">
-  <button class="tab-btn on" id="tab-col" onclick="switchTab(0)">&#127944; Collection</button>
+  <button class="tab-btn on" id="tab-col" onclick="switchTab(0)">&#127945; Collection</button>
   <button class="tab-btn" id="tab-stats" onclick="switchTab(1)">&#128200; Stats &amp; Valeur</button>
   <button class="tab-btn" id="tab-map" onclick="switchTab(2)">&#127758; Carte &amp; Timeline</button>
 </div>
@@ -239,7 +239,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <div class="imgrow">
         <div class="imgbox" id="box-c">
           <span class="ibl">&#128247; Couverture</span>
-          <span class="iph" id="ph-c">&#127944;</span>
+          <span class="iph" id="ph-c">&#127945;</span>
           <img id="prev-c" class="iprev img-clickable" alt="" onclick="openZoom(this.src,'Couverture')">
           <br><label class="ibtn" for="fc">Choisir</label>
           <input type="file" id="fc" style="display:none" accept="image/*" onchange="loadImg(this,'c')">
@@ -412,9 +412,9 @@ function resetF(){
 
 function render(){
   var start=(curPage-1)*PER,page=filtered.slice(start,start+PER),g=document.getElementById('grid');
-  if(!filtered.length){g.innerHTML='<div class="no-res">&#127944; Aucun r&#233;sultat</div>';document.getElementById('pag').innerHTML='';return;}
+  if(!filtered.length){g.innerHTML='<div class="no-res">&#127945; Aucun r&#233;sultat</div>';document.getElementById('pag').innerHTML='';return;}
   g.innerHTML=page.map(function(m){
-    var img=m.image_couverture?'<img src="'+m.image_couverture+'" alt="">':'<span class="ni">&#127944;</span>';
+    var img=m.image_couverture?'<img src="'+m.image_couverture+'" alt="">':'<span class="ni">&#127945;</span>';
     var bp=m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>';
     var scanBadge=m.image_couverture?'<span style="position:absolute;top:6px;right:6px;background:rgba(144,176,240,.85);color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:600">&#128247;</span>':'';
     var ex='';
@@ -928,7 +928,7 @@ function exportPDF(filter) {
   html += '@media print{body{margin:10px}.no-print{display:none}}';
   html += '</style></head><body>';
   html += '<div class="no-print" style="margin-bottom:12px"><button onclick="window.print()" style="padding:8px 16px;background:#1a3a1a;color:#f0d080;border:none;border-radius:4px;cursor:pointer;font-size:13px">&#128424; Imprimer / Sauvegarder en PDF</button></div>';
-  html += '<h1>&#127944; Ma Collection Rugby &mdash; ' + label + '</h1>';
+  html += '<h1>&#127945; Ma Collection Rugby &mdash; ' + label + '</h1>';
   html += '<div class="meta">G\u00e9n\u00e9r\u00e9 le ' + new Date().toLocaleDateString('fr-FR') + ' &bull; ' + data.length + ' programmes</div>';
   html += '<table><thead><tr><th>Date</th><th>Match</th><th>Lieu</th><th>Score</th><th>Collection</th><th>Qt\u00e9</th><th>Cote</th><th>\u00c9tat</th></tr></thead><tbody>';
   
