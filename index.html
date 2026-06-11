@@ -1,9 +1,11 @@
 <!DOCTYPE html>
+<!-- v2.0 - 2026-06-11 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ma Collection Rugby</title>
+<meta name="description" content="Collection de programmes de matchs de rugby - Équipe de France et finales du championnat">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -378,7 +380,7 @@ async function loadAll(){
   document.getElementById('grid').innerHTML='<div class="no-res" style="grid-column:1/-1;padding:60px;text-align:center;color:var(--gris)">Chargement...</div>';
   var r=await sb.from('programmes').select('*').order('id',{ascending:true}).limit(2000);
   if(r.error){
-    document.getElementById('grid').innerHTML='<div class="err-box">Erreur: '+r.error.message+'</div>';
+    document.getElementById('grid').innerHTML='<div class="err-box">Erreur: '+r.error.message+'<br><button class="btn" style="margin-top:10px" onclick="loadAll()">&#8635; Réessayer</button></div>';
     return;
   }
   allData=r.data||[];
@@ -455,7 +457,7 @@ function render(){
   var start=(curPage-1)*PER,page=filtered.slice(start,start+PER),g=document.getElementById('grid');
   if(!filtered.length){g.innerHTML='<div class="no-res">&#127945; Aucun r&#233;sultat</div>';document.getElementById('pag').innerHTML='';return;}
   g.innerHTML=page.map(function(m){
-    var img=m.image_couverture?'<img src="'+m.image_couverture+'" alt="">':'<span class="ni">&#127945;</span>';
+    var img=m.image_couverture?'<img src="'+m.image_couverture+'" loading="lazy" alt="">':'<span class="ni">&#127945;</span>';
     var isClub=m.categorie==='club';
     var bp=m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>';
     var clubBadge=isClub?'<span style="position:absolute;top:6px;left:6px;background:rgba(212,160,40,.9);color:#111;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700">&#127942; Club</span>':'';
@@ -1121,6 +1123,12 @@ function getCoords(lieu) {
 function renderMapTimeline() {
   if(!allData.length) return;
   var el = document.getElementById('map-content');
+  // Skip rebuild if already rendered (perf)
+  if(el.dataset.rendered === '1' && _leafletMap){
+    setTimeout(function(){ _leafletMap.invalidateSize(); }, 100);
+    return;
+  }
+  el.dataset.rendered = '1';
   
   el.innerHTML = '<div style="padding:0">'
     + '<div style="display:flex;border-bottom:1px solid var(--bord);background:#13171d">'
@@ -1146,7 +1154,7 @@ function showSubTab(t) {
 function initMap() {
   if(_leafletMap){ _leafletMap.remove(); _leafletMap=null; }
   
-  _leafletMap = L.map('leaflet-map', {zoomControl:true}).setView([20, 10], 2);
+  _leafletMap = L.map('leaflet-map', {zoomControl:true}).setView([46.5, 5], 4);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
     maxZoom:18
@@ -1255,7 +1263,8 @@ function buildTimeline() {
       if(!d) return;
       // Each year: show dots for each match
       d.have.forEach(function(m) {
-        h += '<div title="'+m.date+' '+m.match+(m.score?' ('+m.score+')':'')+'" '
+        var ttl=(m.date+' '+(m.match||'')+(m.score?' ('+m.score+')':'')).replace(/"/g,'&quot;');
+        h += '<div title="'+ttl+'" '
           + 'onclick="switchTab(0);setTimeout(function(){openModal('+m.id+')},150)" '
           + 'style="width:14px;height:14px;border-radius:3px;background:#2d9e5f;cursor:pointer;'
           + 'border:1px solid rgba(45,158,95,.4)" '
@@ -1320,7 +1329,7 @@ function renderClub(){
   if(!clubFiltered.length){g.innerHTML='<div class="no-res">&#127942; Aucune finale</div>';document.getElementById('cpag').innerHTML='';return;}
   var start=(clubPage-1)*24,page=clubFiltered.slice(start,start+24);
   g.innerHTML=page.map(function(m){
-    var img=m.image_couverture?'<img src="'+m.image_couverture+'" alt="">':'<span class="ni">&#127942;</span>';
+    var img=m.image_couverture?'<img src="'+m.image_couverture+'" loading="lazy" alt="">':'<span class="ni">&#127942;</span>';
     var bp=m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>';
     var ex='';
     if(m.score||m.cote){
