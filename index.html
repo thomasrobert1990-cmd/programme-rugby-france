@@ -42,6 +42,7 @@ header{background:linear-gradient(135deg,#0a0d14,#001a4a,#1a000a);border-bottom:
 .pb.p-oui{background:var(--vert);border-color:var(--vert);color:#fff}
 .pb.p-non{background:rgba(184,32,32,.4);border-color:#b82020;color:#ffaaaa}
 .pb.p-scan{background:rgba(144,176,240,.3);border-color:#90b0f0;color:#c0d8ff}
+.pb.p-club{background:rgba(212,160,40,.3);border-color:#d4a028;color:#f5d060}
 .btn-reset{display:block;width:100%;margin-top:8px;padding:7px;background:rgba(180,32,32,.1);border:1px solid rgba(184,32,32,.3);color:#e06060;border-radius:5px;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif}
 .main{flex:1;padding:16px 20px;overflow-y:auto}
 .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
@@ -172,6 +173,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <button class="pb" id="pb-oui" onclick="setProg('oui')">&#10003; Collection</button>
       <button class="pb" id="pb-non" onclick="setProg('non')">&#10007; Manquants</button>
       <button class="pb" id="pb-scan" onclick="setProg('scan')">&#128247; Scann&#233;s</button>
+      <button class="pb" id="pb-club" onclick="setProg('club')">&#127942; Clubs</button>
     </div></div>
     <div class="fg"><span class="fl">&#201;tat</span><select id="f-e"><option value="">Tous</option><option>Excellent</option><option>Tr&#232;s bon</option><option>Bon</option><option>Moyen</option><option>Mauvais</option></select></div>
     <div class="fg"><span class="fl">Lieu</span><input type="text" id="f-l" placeholder="France, Twickenham..."></div>
@@ -356,7 +358,9 @@ function buildTeams(){
 }
 
 function updateStats(){
-  var tot=allData.length,p=allData.filter(function(m){return m.programme;}).length;
+  var france=allData.filter(function(m){return m.categorie!=='club';});
+  var clubs=allData.filter(function(m){return m.categorie==='club';});
+  var tot=france.length, p=france.filter(function(m){return m.programme;}).length;
   document.getElementById('ht').textContent=tot;
   document.getElementById('hp').textContent=p;
   document.getElementById('hpc').textContent=tot?Math.round(p/tot*100)+'%':'0%';
@@ -372,7 +376,7 @@ function dn(d){if(!d)return 0;var p=d.split('/');return p.length===3?+p[2]*10000
 
 function setProg(v){
   pf=v;
-  ['all','oui','non','scan'].forEach(function(x){var el=document.getElementById('pb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
+  ['all','oui','non','scan','club'].forEach(function(x){var el=document.getElementById('pb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
   curPage=1;applyF();
 }
 
@@ -388,6 +392,7 @@ function applyF(){
     if(pf==='oui'&&!m.programme)return false;
     if(pf==='non'&&m.programme)return false;
     if(pf==='scan'&&(!m.image_couverture||!m.image_couverture.trim()))return false;
+    if(pf==='club'&&m.categorie!=='club')return false;
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
     if(t&&m.domicile!==t&&m.exterieur!==t)return false;
     if(e&&m.etat!==e)return false;
@@ -415,7 +420,9 @@ function render(){
   if(!filtered.length){g.innerHTML='<div class="no-res">&#127945; Aucun r&#233;sultat</div>';document.getElementById('pag').innerHTML='';return;}
   g.innerHTML=page.map(function(m){
     var img=m.image_couverture?'<img src="'+m.image_couverture+'" alt="">':'<span class="ni">&#127945;</span>';
+    var isClub=m.categorie==='club';
     var bp=m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>';
+    var clubBadge=isClub?'<span style="position:absolute;top:6px;left:6px;background:rgba(212,160,40,.9);color:#111;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700">&#127942; Club</span>':'';
     var scanBadge=m.image_couverture?'<span style="position:absolute;top:6px;right:6px;background:rgba(144,176,240,.85);color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:600">&#128247;</span>':'';
     var ex='';
     if(m.etat||m.quantite>1||m.cote){
@@ -426,7 +433,7 @@ function render(){
       ex+='</div>';
     }
     return'<div class="card" onclick="openModal('+m.id+')">'
-      +'<div class="ci" style="position:relative">'+img+scanBadge+'</div>'
+      +'<div class="ci" style="position:relative">'+(isClub?'<div style="background:linear-gradient(135deg,#2a1800,#1a1200)">'+img+'</div>':img)+scanBadge+clubBadge+'</div>'
       +'<div class="cb">'
       +'<div class="cd">'+m.date+'</div>'
       +'<div class="cm">'+m.match+'</div>'
