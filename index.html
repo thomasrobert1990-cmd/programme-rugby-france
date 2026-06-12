@@ -378,7 +378,9 @@ function switchTab(t){
 /* COLLECTION */
 async function loadAll(){
   document.getElementById('grid').innerHTML='<div class="no-res" style="grid-column:1/-1;padding:60px;text-align:center;color:var(--gris)">Chargement...</div>';
-  var r=await sb.from('programmes').select('*').order('id',{ascending:true}).range(0,1999);
+  var r1=await sb.from('programmes').select('*').order('id',{ascending:true}).range(0,999);
+  var r2=await sb.from('programmes').select('*').order('id',{ascending:true}).range(1000,1999);
+  var r={data:(r1.data||[]).concat(r2.data||[]),error:r1.error||r2.error};
   if(r.error){
     document.getElementById('grid').innerHTML='<div class="err-box">Erreur: '+r.error.message+'<br><button class="btn" style="margin-top:10px" onclick="loadAll()">&#8635; Réessayer</button></div>';
     return;
