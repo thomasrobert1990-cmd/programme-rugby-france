@@ -196,6 +196,13 @@ textarea.fi{resize:vertical;min-height:58px}
           <option value="dd">Date &#8595;</option>
           <option value="az">Match A&#8594;Z</option>
         </select>
+        <label>Par page&#160;:</label>
+        <select id="pp" onchange="changePerPage(this.value)">
+          <option value="24">24</option>
+          <option value="48">48</option>
+          <option value="96">96</option>
+          <option value="9999">Tout</option>
+        </select>
         <button class="btn" onclick="openModal(null)">+ Ajouter</button>
       </div>
     </div>
@@ -355,7 +362,7 @@ textarea.fi{resize:vertical;min-height:58px}
 
 <script>
 var sb = supabase.createClient('https://qhpawhbumvrdtfxiwinz.supabase.co','sb_publishable_dM9TW2UePXyeNqCszB7rZg_ZxlqMJaT');
-var allData=[],filtered=[],curPage=1,PER=24,pf='all',editId=null,iC='',iF='';
+var allData=[],filtered=[],curPage=1,PER=24,perPage=24,pf='all',editId=null,iC='',iF='';
 var ABBREV={'ads':'afriquedusud','pdg':'galles','nz':'nouvellezelande'};
 var impFiles=[],impRes=[],impTabCur='all';
 
@@ -414,6 +421,12 @@ function nm(s){
 }
 function dn(d){if(!d)return 0;var p=d.split('/');return p.length===3?+p[2]*10000+ +p[1]*100+ +p[0]:0;}
 
+function changePerPage(v){
+  perPage = +v || 24;
+  curPage = 1;
+  render();
+}
+
 function setProg(v){
   pf=v;
   ['all','oui','non','scan'].forEach(function(x){var el=document.getElementById('pb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
@@ -456,7 +469,7 @@ function resetF(){
 }
 
 function render(){
-  var start=(curPage-1)*PER,page=filtered.slice(start,start+PER),g=document.getElementById('grid');
+  var start=(curPage-1)*perPage,page=filtered.slice(start,start+perPage),g=document.getElementById('grid');
   if(!filtered.length){g.innerHTML='<div class="no-res">&#127945; Aucun r&#233;sultat</div>';document.getElementById('pag').innerHTML='';return;}
   g.innerHTML=page.map(function(m){
     var img=m.image_couverture?'<img src="'+m.image_couverture+'" loading="lazy" alt="">':'<span class="ni">&#127945;</span>';
@@ -485,7 +498,7 @@ function render(){
 }
 
 function renderPag(){
-  var tot=Math.ceil(filtered.length/PER),pag=document.getElementById('pag');
+  var tot=Math.ceil(filtered.length/perPage),pag=document.getElementById('pag');
   if(tot<=1){pag.innerHTML='';return;}
   var h='<button class="pgb" onclick="goP('+(curPage-1)+')" '+(curPage===1?'disabled':'')+'>&#8249;</button>';
   var prev=null;
@@ -499,7 +512,7 @@ function renderPag(){
   h+='<button class="pgb" onclick="goP('+(curPage+1)+')" '+(curPage===tot?'disabled':'')+'>&#8250;</button>';
   pag.innerHTML=h;
 }
-function goP(p){var tot=Math.ceil(filtered.length/PER);if(p<1||p>tot)return;curPage=p;render();window.scrollTo(0,0);}
+function goP(p){var tot=Math.ceil(filtered.length/perPage);if(p<1||p>tot)return;curPage=p;render();window.scrollTo(0,0);}
 
 /* MODAL */
 function openModal(id){
