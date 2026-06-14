@@ -236,6 +236,13 @@ textarea.fi{resize:vertical;min-height:58px}
           <option value="dd">Date &#8595;</option>
           <option value="az">Match A&#8594;Z</option>
         </select>
+        <label>Par page&#160;:</label>
+        <select id="cpp" onchange="changeClubPerPage(this.value)">
+          <option value="24">24</option>
+          <option value="48">48</option>
+          <option value="96">96</option>
+          <option value="9999">Tout</option>
+        </select>
       </div>
     </div>
     <div class="grid" id="cgrid"></div>
@@ -1306,7 +1313,13 @@ function buildTimeline() {
 
 
 /* ===== CLUB TAB ===== */
-var clubFiltered=[], clubPage=1, clubPf='all';
+var clubFiltered=[], clubPage=1, clubPf='all', clubPerPage=24;
+
+function changeClubPerPage(v){
+  clubPerPage = +v || 24;
+  clubPage = 1;
+  renderClub();
+}
 
 function setClubProg(v){
   clubPf=v;
@@ -1342,7 +1355,7 @@ function renderClub(){
   var g=document.getElementById('cgrid');
   if(!g)return;
   if(!clubFiltered.length){g.innerHTML='<div class="no-res">&#127942; Aucune finale</div>';document.getElementById('cpag').innerHTML='';return;}
-  var start=(clubPage-1)*24,page=clubFiltered.slice(start,start+24);
+  var start=(clubPage-1)*clubPerPage,page=clubFiltered.slice(start,start+clubPerPage);
   g.innerHTML=page.map(function(m){
     var img=m.image_couverture?'<img src="'+m.image_couverture+'" loading="lazy" alt="">':'<span class="ni">&#127942;</span>';
     var bp=m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>';
@@ -1364,7 +1377,7 @@ function renderClub(){
       +ex+'</div></div>';
   }).join('');
   // Pagination
-  var tot=Math.ceil(clubFiltered.length/24),pag=document.getElementById('cpag');
+  var tot=Math.ceil(clubFiltered.length/clubPerPage),pag=document.getElementById('cpag');
   if(!pag)return;
   if(tot<=1){pag.innerHTML='';return;}
   var h='<button class="pgb" onclick="goClubP('+(clubPage-1)+')" '+(clubPage===1?'disabled':'')+'>&#8249;</button>';
@@ -1375,7 +1388,7 @@ function renderClub(){
   pag.innerHTML=h;
 }
 
-function goClubP(p){var tot=Math.ceil(clubFiltered.length/24);if(p<1||p>tot)return;clubPage=p;renderClub();}
+function goClubP(p){var tot=Math.ceil(clubFiltered.length/clubPerPage);if(p<1||p>tot)return;clubPage=p;renderClub();}
 
 function resetClubF(){
   ['cf-s','cf-y1','cf-y2'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
