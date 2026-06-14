@@ -6,6 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ma Collection Rugby</title>
 <meta name="description" content="Collection de programmes de matchs de rugby - Équipe de France et finales du championnat">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#002395">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rugby">
+<link rel="apple-touch-icon" href="icon-192.png">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1402,6 +1409,14 @@ document.addEventListener('DOMContentLoaded', function(){
     if(el)el.addEventListener('input',function(){clubPage=1;applyClubF();});
   });
 });
+
+
+/* PWA - Service Worker */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(e){ console.log('SW registration failed', e); });
+  });
+}
 
 loadAll();
 </script>
