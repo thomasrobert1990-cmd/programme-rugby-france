@@ -581,21 +581,6 @@ function render(){
   renderPag();
 }
 
-function renderPag(){
-  var tot=Math.ceil(filtered.length/perPage),pag=document.getElementById('pag');
-  if(tot<=1){pag.innerHTML='';return;}
-  var h='<button class="pgb" onclick="goP('+(curPage-1)+')" '+(curPage===1?'disabled':'')+'>&#8249;</button>';
-  var prev=null;
-  for(var i=1;i<=tot;i++){
-    if(i===1||i===tot||(i>=curPage-2&&i<=curPage+2)){
-      if(prev&&i-prev>1)h+='<span style="color:var(--gris);padding:0 3px">&#8230;</span>';
-      h+='<button class="pgb'+(i===curPage?' on':'')+'" onclick="goP('+i+')">'+i+'</button>';
-      prev=i;
-    }
-  }
-  h+='<button class="pgb" onclick="goP('+(curPage+1)+')" '+(curPage===tot?'disabled':'')+'>&#8250;</button>';
-  pag.innerHTML=h;
-}
 function renderList(page,g){
   var rows=page.map(function(m){
     var badge=m.programme?'<span style="color:#5de895">&#10003;</span>':'<span style="color:#e06060">&#10007;</span>';
@@ -935,18 +920,6 @@ function scard(val,col,title,sub){
 function toggleMarket(){
   var b=document.getElementById('market-box');
   if(b){b.style.display=b.style.display==='none'?'block':'none';}
-}
-
-function searchMarket(){
-  var q=(document.getElementById('mkt-q')||{}).value;
-  if(!q||!q.trim())return;
-  var enc=encodeURIComponent(q.trim()+' rugby programme');
-  var lm=document.getElementById('lnk-mullock');
-  var lr=document.getElementById('lnk-relics');
-  var le=document.getElementById('lnk-ebay');
-  if(lm)lm.href='https://www.mullockauctions.co.uk/search?q='+enc;
-  if(lr)lr.href='https://www.rugbyrelics.com/Museum/search.asp?search='+enc;
-  if(le)le.href='https://www.ebay.fr/sch/i.html?_nkw='+enc;
 }
 
 /* EXPORT */
