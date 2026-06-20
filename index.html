@@ -1357,6 +1357,13 @@ function getCoords(lieu) {
   return null;
 }
 
+function setMapScope(scope){
+  window._mapScope = scope;
+  var el = document.getElementById('map-content');
+  if(el) el.dataset.rendered = '';
+  renderMapTimeline();
+}
+
 function renderMapTimeline() {
   if(!allData.length) return;
   var el = document.getElementById('map-content');
@@ -1367,7 +1374,12 @@ function renderMapTimeline() {
   }
   el.dataset.rendered = '1';
   
+  var sc=window._mapScope||'france';
   el.innerHTML = '<div style="padding:0">'
+    + '<div style="display:flex;gap:8px;padding:12px 16px 0">'
+    + '<button onclick="setMapScope(\'france\')" style="flex:1;padding:9px;border-radius:8px;cursor:pointer;border:1px solid '+(sc!=='club'?'var(--rouge)':'var(--bord)')+';background:'+(sc!=='club'?'rgba(237,41,57,.15)':'var(--carte)')+';color:'+(sc!=='club'?'#fff':'var(--gris)')+';font-family:Bebas Neue,cursive;letter-spacing:1px;font-size:14px">&#127981; \u00c9quipe de France</button>'
+    + '<button onclick="setMapScope(\'club\')" style="flex:1;padding:9px;border-radius:8px;cursor:pointer;border:1px solid '+(sc==='club'?'var(--or)':'var(--bord)')+';background:'+(sc==='club'?'rgba(212,160,40,.15)':'var(--carte)')+';color:'+(sc==='club'?'#fff':'var(--gris)')+';font-family:Bebas Neue,cursive;letter-spacing:1px;font-size:14px">&#127942; Finales Clubs</button>'
+    + '</div>'
     + '<div style="display:flex;border-bottom:1px solid var(--bord);background:#13171d">'
     + '<button class="tab-btn on" id="subtab-map" onclick="showSubTab(\'map\')">&#127758; Carte des stades</button>'
     + '<button class="tab-btn" id="subtab-tl" onclick="showSubTab(\'tl\')">&#128336; Timeline</button>'
@@ -1390,7 +1402,8 @@ function showSubTab(t) {
 
 function initMap() {
   if(_leafletMap){ _leafletMap.remove(); _leafletMap=null; }
-  
+  var _scope=window._mapScope||'france';
+  var _isClub=_scope==='club';
   _leafletMap = L.map('leaflet-map', {zoomControl:true}).setView([46.5, 5], 4);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
@@ -1399,7 +1412,7 @@ function initMap() {
 
   // Group matches by location
   var locGroups = {};
-  allData.forEach(function(m) {
+  allData.filter(function(m){return _isClub?m.categorie==='club':m.categorie!=='club';}).forEach(function(m) {
     var coords = getCoords(m.lieu || '');
     if(!coords) return;
     var key = coords[0].toFixed(2) + ',' + coords[1].toFixed(2);
@@ -1456,9 +1469,11 @@ function initMap() {
 }
 
 function buildTimeline() {
+  var _scope=window._mapScope||'france';
+  var _isClub=_scope==='club';
   // Group by year
   var byYear = {};
-  allData.forEach(function(m) {
+  allData.filter(function(m){return _isClub?m.categorie==='club':m.categorie!=='club';}).forEach(function(m) {
     var yr = parseInt(m.year)||0;
     if(!yr) return;
     if(!byYear[yr]) byYear[yr] = {have:[], miss:[]};
