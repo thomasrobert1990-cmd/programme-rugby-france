@@ -140,7 +140,19 @@ textarea.fi{resize:vertical;min-height:58px}
 .bx-cv{background:rgba(60,100,180,.2);color:#90b0f0;border:1px solid rgba(80,120,200,.3)}
 .bx-fm{background:rgba(140,70,180,.2);color:#d090f0;border:1px solid rgba(160,90,200,.3)}
 .stats-wrap{padding:20px 24px;max-width:960px;margin:0 auto;display:none}
-@media(max-width:768px){.sidebar,.hstats{display:none}.fg2{grid-template-columns:1fr}.imgrow{grid-template-columns:1fr}}
+.mobile-search{display:none}
+@media(max-width:768px){
+  .sidebar{display:none}
+  .sidebar.mobile-open{display:block;position:fixed;top:0;left:0;width:85%;max-width:320px;height:100vh;z-index:200;overflow-y:auto;box-shadow:2px 0 20px rgba(0,0,0,.6)}
+  .hstats{display:none}
+  .fg2{grid-template-columns:1fr}
+  .imgrow{grid-template-columns:1fr}
+  .mobile-search{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+  .mobile-search input{flex:1;padding:11px 14px;background:var(--carte);border:1px solid var(--bord);border-radius:8px;color:var(--blanc);font-size:15px}
+  .mfilter-btn{background:var(--vert);color:#fff;border:none;border-radius:8px;padding:11px 15px;font-size:18px;cursor:pointer}
+  .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199}
+  .mobile-overlay.on{display:block}
+}
 
 /* IMAGE ZOOM */
 .zoom-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:500;cursor:zoom-out;align-items:center;justify-content:center}
@@ -173,6 +185,7 @@ textarea.fi{resize:vertical;min-height:58px}
   <button class="tab-btn" id="tab-map" onclick="switchTab(2)">&#127758; Carte &amp; Timeline</button>
 </div>
 
+<div class="mobile-overlay" id="m-overlay" onclick="toggleMobileFilters()"></div>
 <div class="app" id="view-col">
   <aside class="sidebar">
     <div class="sb-t">&#128269; Filtres</div>
@@ -190,6 +203,10 @@ textarea.fi{resize:vertical;min-height:58px}
     <button class="btn-reset" onclick="resetF()">&#10005; Effacer</button>
   </aside>
   <main class="main">
+    <div class="mobile-search">
+      <input type="text" id="m-search" placeholder="&#128269; Rechercher une &#233;quipe, un lieu..." oninput="mobileSearch(this.value)">
+      <button class="mfilter-btn" onclick="toggleMobileFilters()">&#9881;</button>
+    </div>
     <div class="toolbar">
       <div class="rc"><strong id="cnt">&#8212;</strong> r&#233;sultats</div>
       <div class="tr">
@@ -218,6 +235,7 @@ textarea.fi{resize:vertical;min-height:58px}
   </main>
 </div>
 
+<div class="mobile-overlay" id="mc-overlay" onclick="toggleMobileClubFilters()"></div>
 <div class="app" id="view-club" style="display:none">
   <aside class="sidebar" id="sidebar-club">
     <div class="sb-t">&#128269; Filtres</div>
@@ -231,6 +249,10 @@ textarea.fi{resize:vertical;min-height:58px}
     <button class="btn-reset" onclick="resetClubF()">&#10005; Effacer</button>
   </aside>
   <main class="main">
+    <div class="mobile-search">
+      <input type="text" id="mc-search" placeholder="&#128269; Rechercher une finale..." oninput="mobileClubSearch(this.value)">
+      <button class="mfilter-btn" onclick="toggleMobileClubFilters()">&#9881;</button>
+    </div>
     <div class="toolbar">
       <div class="rc"><strong id="ccnt">&#8212;</strong> r&#233;sultats</div>
       <div class="tr">
@@ -1410,6 +1432,31 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 
+
+
+/* MOBILE UI */
+function mobileSearch(v){
+  document.getElementById('f-s').value = v;
+  applyF();
+}
+function toggleMobileFilters(){
+  var sb = document.querySelector('#view-col .sidebar');
+  var ov = document.getElementById('m-overlay');
+  if(sb){
+    sb.classList.toggle('mobile-open');
+    ov.classList.toggle('on');
+  }
+}
+
+function mobileClubSearch(v){
+  var el=document.getElementById('cf-s');
+  if(el){el.value=v;applyClubF();}
+}
+function toggleMobileClubFilters(){
+  var sb=document.querySelector('#view-club .sidebar');
+  var ov=document.getElementById('mc-overlay');
+  if(sb){sb.classList.toggle('mobile-open');ov.classList.toggle('on');}
+}
 
 /* PWA - Service Worker */
 if('serviceWorker' in navigator){
