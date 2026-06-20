@@ -140,6 +140,8 @@ textarea.fi{resize:vertical;min-height:58px}
 .bx-cv{background:rgba(60,100,180,.2);color:#90b0f0;border:1px solid rgba(80,120,200,.3)}
 .bx-fm{background:rgba(140,70,180,.2);color:#d090f0;border:1px solid rgba(160,90,200,.3)}
 .stats-wrap{padding:20px 24px;max-width:960px;margin:0 auto;display:none}
+.listview{display:block;background:var(--carte);border:1px solid var(--bord);border-radius:10px;overflow-x:auto}
+.listview tr:hover{background:rgba(255,255,255,.03)}
 .mobile-search{display:none}
 @media(max-width:768px){
   .sidebar{display:none}
@@ -180,6 +182,7 @@ textarea.fi{resize:vertical;min-height:58px}
     <div class="hs"><span class="v" id="hpc">&#8212;</span><span class="l">Compl&#233;t&#233;</span></div>
     <div class="hs"><span class="v" id="hm">&#8212;</span><span class="l">Manquants</span></div>
   </div>
+  <button onclick="forceUpdate()" title="Mettre à jour l'app" style="background:rgba(255,255,255,.08);border:1px solid var(--bord);color:var(--gris);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:16px;margin-left:10px">&#8635;</button>
 </header>
 
 <div class="tabs-nav">
@@ -224,6 +227,7 @@ textarea.fi{resize:vertical;min-height:58px}
           <option value="dd">Date &#8595;</option>
           <option value="az">Match A&#8594;Z</option>
         </select>
+        <button class="btn-o" id="viewtoggle" onclick="toggleView()" title="Basculer vue">&#9783; Liste</button>
         <label>Par page&#160;:</label>
         <select id="pp" onchange="changePerPage(this.value)">
           <option value="24">24</option>
@@ -410,7 +414,7 @@ textarea.fi{resize:vertical;min-height:58px}
 
 <script>
 var sb = supabase.createClient('https://qhpawhbumvrdtfxiwinz.supabase.co','sb_publishable_dM9TW2UePXyeNqCszB7rZg_ZxlqMJaT');
-var allData=[],filtered=[],curPage=1,PER=24,perPage=24,pf='all',editId=null,iC='',iF='';
+var allData=[],filtered=[],curPage=1,PER=24,perPage=24,viewMode='cards',pf='all',editId=null,iC='',iF='';
 var ABBREV={'ads':'afriquedusud','pdg':'galles','nz':'nouvellezelande'};
 var impFiles=[],impRes=[],impTabCur='all';
 
@@ -535,8 +539,18 @@ function resetF(){
   setProg('all');
 }
 
+function toggleView(){
+  viewMode = viewMode==='cards'?'list':'cards';
+  var btn=document.getElementById('viewtoggle');
+  if(btn)btn.innerHTML = viewMode==='cards'?'&#9783; Liste':'&#9638; Cartes';
+  var g=document.getElementById('grid');
+  if(g)g.className = viewMode==='list'?'listview':'grid';
+  render();
+}
+
 function render(){
   var start=(curPage-1)*perPage,page=filtered.slice(start,start+perPage),g=document.getElementById('grid');
+  if(viewMode==='list'){ renderList(page,g); renderPag(); return; }
   if(!filtered.length){g.innerHTML='<div class="no-res">&#127945; Aucun r&#233;sultat</div>';document.getElementById('pag').innerHTML='';return;}
   g.innerHTML=page.map(function(m){
     var img=m.image_couverture?'<img src="'+m.image_couverture+'" loading="lazy" alt="">':'<span class="ni">&#127945;</span>';
@@ -579,6 +593,45 @@ function renderPag(){
   h+='<button class="pgb" onclick="goP('+(curPage+1)+')" '+(curPage===tot?'disabled':'')+'>&#8250;</button>';
   pag.innerHTML=h;
 }
+function renderList(page,g){
+  var rows=page.map(function(m){
+    var badge=m.programme?'<span style="color:#5de895">&#10003;</span>':'<span style="color:#e06060">&#10007;</span>';
+    var qty=m.quantite>1?' <span style="color:var(--or);font-size:11px">&#215;'+m.quantite+'</span>':'';
+    var scan=m.image_couverture?'&#128247;':'';
+    return '<tr onclick="openModal('+m.id+')" style="cursor:pointer;border-bottom:1px solid rgba(42,48,64,.4)">'
+      +'<td style="padding:8px 10px;white-space:nowrap;color:var(--gris);font-size:12px">'+(m.date||'')+'</td>'
+      +'<td style="padding:8px 10px;color:var(--blanc);font-weight:600;font-size:13px">'+(m.match||'')+qty+'</td>'
+      +'<td style="padding:8px 10px;color:var(--gris);font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(m.lieu||'')+'</td>'
+      +'<td style="padding:8px 10px;color:var(--or2);font-size:12px;white-space:nowrap">'+(m.score||'')+'</td>'
+      +'<td style="padding:8px 10px;text-align:center">'+badge+'</td>'
+      +'<td style="padding:8px 10px;text-align:center;font-size:13px">'+scan+'</td>'
+      +'<td style="padding:8px 10px;color:var(--or);font-size:12px;white-space:nowrap">'+(m.cote||'')+'</td>'
+      +'</tr>';
+  }).join('');
+  g.innerHTML='<table style="width:100%;border-collapse:collapse">'
+    +'<thead><tr style="border-bottom:2px solid var(--rouge)">'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Date</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Match</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Lieu</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Score</th>'
+    +'<th style="padding:8px 10px;font-size:11px;color:var(--gris);text-transform:uppercase">&#10003;</th>'
+    +'<th style="padding:8px 10px;font-size:11px;color:var(--gris)">&#128247;</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Cote</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function renderPag(){
+  var tot=Math.ceil(filtered.length/perPage),pag=document.getElementById('pag');
+  if(!pag)return;
+  if(tot<=1){pag.innerHTML='';return;}
+  var h='<button class="pgb" onclick="goP('+(curPage-1)+')" '+(curPage===1?'disabled':'')+'>&#8249;</button>';
+  var maxBtn=tot>15?15:tot;
+  for(var i=1;i<=maxBtn;i++)h+='<button class="pgb'+(i===curPage?' on':'')+'" onclick="goP('+i+')">'+i+'</button>';
+  if(tot>15)h+='<span style="color:var(--gris);padding:0 8px">...'+tot+'</span>';
+  h+='<button class="pgb" onclick="goP('+(curPage+1)+')" '+(curPage===tot?'disabled':'')+'>&#8250;</button>';
+  pag.innerHTML=h;
+}
+
 function goP(p){var tot=Math.ceil(filtered.length/perPage);if(p<1||p>tot)return;curPage=p;render();window.scrollTo(0,0);}
 
 /* MODAL */
@@ -687,42 +740,85 @@ async function deleteRec(){
 /* STATS */
 function renderStats(){
   if(!allData.length)return;
-  var total=allData.length;
-  var have=allData.filter(function(m){return m.programme;}).length;
-  var pct=Math.round(have/total*100);
-  var withImg=allData.filter(function(m){return m.image_couverture;}).length;
-  var withCote=allData.filter(function(m){return m.cote&&m.cote.trim();});
+  renderStatsFor(window._statsScope||'france');
+}
+
+function setStatsScope(scope){
+  window._statsScope=scope;
+  renderStatsFor(scope);
+}
+
+function renderStatsFor(scope){
+  var isClub=(scope==='club');
+  var data=allData.filter(function(m){return isClub?m.categorie==='club':m.categorie!=='club';});
+  var total=data.length;
+  var have=data.filter(function(m){return m.programme;}).length;
+  var pct=total?Math.round(have/total*100):0;
+  var withImg=data.filter(function(m){return m.image_couverture;}).length;
+  var withCote=data.filter(function(m){return m.cote&&m.cote.trim();});
   var totalVal=0;
   withCote.forEach(function(m){
     var v=parseFloat((m.cote||'').replace(/[^0-9.,]/g,'').replace(',','.'));
     if(!isNaN(v))totalVal+=v;
   });
+
+  // Dashboard highlights
+  var owned=data.filter(function(m){return m.programme;});
+  var ownedSorted=owned.slice().sort(function(a,b){return dn(a.date)-dn(b.date);});
+  var oldest=ownedSorted[0], newest=ownedSorted[ownedSorted.length-1];
+  // Most expensive owned
+  var priced=owned.map(function(m){
+    var v=parseFloat((m.cote||'').replace(/[^0-9.,]/g,'').replace(',','.'));
+    return {m:m,v:isNaN(v)?0:v};
+  }).filter(function(x){return x.v>0;});
+  priced.sort(function(a,b){return b.v-a.v;});
+  var topPrice=priced[0];
+
   var decades={};
-  allData.forEach(function(m){
+  data.forEach(function(m){
     var yr=parseInt(m.year)||0;if(!yr)return;
     var dec=Math.floor(yr/10)*10;
     if(!decades[dec])decades[dec]={total:0,have:0};
     decades[dec].total++;if(m.programme)decades[dec].have++;
   });
+  // Best & worst decade
+  var decArr=Object.keys(decades).map(function(k){var d=decades[k];return{dec:k,pct:d.total?d.have/d.total:0,t:d.total,h:d.have};}).filter(function(d){return d.t>=3;});
+  var bestDec=decArr.slice().sort(function(a,b){return b.pct-a.pct;})[0];
+  var worstDec=decArr.slice().sort(function(a,b){return a.pct-b.pct;})[0];
+
+  // Opponents (France only)
   var opp={};
-  allData.forEach(function(m){
-    var o=m.domicile==='France'?m.exterieur:m.domicile;
-    if(!o||o==='France')return;
-    if(!opp[o])opp[o]={total:0,have:0};
-    opp[o].total++;if(m.programme)opp[o].have++;
-  });
+  if(!isClub){
+    data.forEach(function(m){
+      var o=m.domicile==='France'?m.exterieur:m.domicile;
+      if(!o||o==='France')return;
+      if(!opp[o])opp[o]={total:0,have:0};
+      opp[o].total++;if(m.programme)opp[o].have++;
+    });
+  }
   var topOpp=Object.keys(opp).map(function(k){return{name:k,t:opp[k].total,h:opp[k].have};});
   topOpp.sort(function(a,b){return b.t-a.t;});topOpp=topOpp.slice(0,10);
-  var oldMiss=allData.filter(function(m){return !m.programme&&(parseInt(m.year)||0)<1960;});
+
+  var oldThreshold=isClub?1950:1960;
+  var oldMiss=data.filter(function(m){return !m.programme&&(parseInt(m.year)||0)<oldThreshold;});
   oldMiss.sort(function(a,b){return(parseInt(a.year)||0)-(parseInt(b.year)||0);});
 
   var h='';
+  // Scope toggle
+  h+='<div style="display:flex;gap:8px;margin-bottom:18px">';
+  h+='<button onclick="setStatsScope(\'france\')" style="flex:1;padding:10px;border-radius:8px;cursor:pointer;border:1px solid '+(!isClub?'var(--rouge)':'var(--bord)')+';background:'+(!isClub?'rgba(237,41,57,.15)':'var(--carte)')+';color:'+(!isClub?'#fff':'var(--gris)')+';font-family:Bebas Neue,cursive;letter-spacing:1px;font-size:15px">&#127981; \u00c9quipe de France</button>';
+  h+='<button onclick="setStatsScope(\'club\')" style="flex:1;padding:10px;border-radius:8px;cursor:pointer;border:1px solid '+(isClub?'var(--or)':'var(--bord)')+';background:'+(isClub?'rgba(212,160,40,.15)':'var(--carte)')+';color:'+(isClub?'#fff':'var(--gris)')+';font-family:Bebas Neue,cursive;letter-spacing:1px;font-size:15px">&#127942; Finales Clubs</button>';
+  h+='</div>';
+
+  // KPI cards
   h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">';
   h+=scard(have,'#5de895','Programmes','en collection');
   h+=scard(pct+'%','var(--or)','Compl&#233;tude','de la collection');
   h+=scard(total-have,'#e06060','Manquants','programmes');
   h+=scard(withImg,'#90b0f0','Scann&#233;s','couvertures en ligne');
   h+='</div>';
+
+  // Value box
   h+='<div style="background:var(--carte);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">';
   h+='<div><div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--gris);margin-bottom:4px">Valeur estim&#233;e</div>';
   if(totalVal>0){
@@ -730,10 +826,19 @@ function renderStats(){
     h+='<div style="font-size:13px;color:var(--gris);margin-top:4px">Bas&#233; sur '+withCote.length+' programmes cot&#233;s</div>';
   }else{
     h+='<div style="font-size:15px;color:var(--gris)">Aucune cote renseign&#233;e</div>';
-    h+='<div style="font-size:13px;color:var(--gris);margin-top:4px">Renseigne les cotes dans les fiches</div>';
   }
   h+='</div><button class="btn-o" onclick="toggleMarket()">&#128269; Prix du march&#233;</button></div>';
 
+  // Dashboard highlights cards
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">';
+  if(oldest)h+=dcard('&#128336; Plus ancien','#90b0f0',oldest.date,oldest.match,oldest.id);
+  if(newest)h+=dcard('&#10024; Plus r&#233;cent','#5de895',newest.date,newest.match,newest.id);
+  if(topPrice)h+=dcard('&#128176; Plus cot&#233;',topPrice.v>0?'var(--or)':'#888',topPrice.m.cote,topPrice.m.match,topPrice.m.id);
+  if(bestDec)h+=dcard('&#127942; Meilleure d&#233;cennie','#5de895',Math.round(bestDec.pct*100)+'%',bestDec.dec+'s ('+bestDec.h+'/'+bestDec.t+')',null);
+  if(worstDec)h+=dcard('&#128201; \u00c0 compl&#233;ter','#e06060',Math.round(worstDec.pct*100)+'%',worstDec.dec+'s ('+worstDec.h+'/'+worstDec.t+')',null);
+  h+='</div>';
+
+  // Decades
   h+='<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:18px 20px;margin-bottom:20px">';
   h+='<div style="font-size:14px;font-weight:600;color:var(--blanc);margin-bottom:14px">Compl&#233;tude par d&#233;cennie</div>';
   Object.keys(decades).sort().forEach(function(dec){
@@ -746,23 +851,46 @@ function renderStats(){
   });
   h+='</div>';
 
-  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">';
+  // Two columns: opponents (France) + old missing
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" class="stats-2col">';
+  if(!isClub){
+    h+='<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:18px 20px">';
+    h+='<div style="font-size:14px;font-weight:600;color:var(--blanc);margin-bottom:12px">Top adversaires</div>';
+    topOpp.forEach(function(o){
+      var p=Math.round(o.h/o.t*100);
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(42,48,64,.4)">';
+      h+='<span style="font-size:13px;color:var(--blanc)">'+o.name+'</span>';
+      h+='<span style="font-size:12px;color:var(--gris)">'+o.h+'/'+o.t+' <span style="color:var(--or)">'+p+'%</span></span></div>';
+    });
+    h+='</div>';
+  }else{
+    // For clubs: top clubs by finals appearances
+    var clubApp={};
+    data.forEach(function(m){
+      [m.domicile,m.exterieur].forEach(function(t){
+        if(!t)return;
+        if(!clubApp[t])clubApp[t]={total:0,have:0};
+        clubApp[t].total++;if(m.programme)clubApp[t].have++;
+      });
+    });
+    var topClubs=Object.keys(clubApp).map(function(k){return{name:k,t:clubApp[k].total,h:clubApp[k].have};});
+    topClubs.sort(function(a,b){return b.t-a.t;});topClubs=topClubs.slice(0,10);
+    h+='<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:18px 20px">';
+    h+='<div style="font-size:14px;font-weight:600;color:var(--blanc);margin-bottom:12px">Clubs les plus pr&#233;sents en finale</div>';
+    topClubs.forEach(function(o){
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(42,48,64,.4)">';
+      h+='<span style="font-size:13px;color:var(--blanc)">'+o.name+'</span>';
+      h+='<span style="font-size:12px;color:var(--gris)">'+o.t+' finale'+(o.t>1?'s':'')+'</span></div>';
+    });
+    h+='</div>';
+  }
   h+='<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:18px 20px">';
-  h+='<div style="font-size:14px;font-weight:600;color:var(--blanc);margin-bottom:12px">Top adversaires</div>';
-  topOpp.forEach(function(o){
-    var p=Math.round(o.h/o.t*100);
-    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(42,48,64,.4)">';
-    h+='<span style="font-size:13px;color:var(--blanc)">'+o.name+'</span>';
-    h+='<span style="font-size:12px;color:var(--gris)">'+o.h+'/'+o.t+' <span style="color:var(--or)">'+p+'%</span></span></div>';
-  });
-  h+='</div>';
-  h+='<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:18px 20px">';
-  h+='<div style="font-size:14px;font-weight:600;color:var(--blanc);margin-bottom:12px">Manquants avant 1960</div>';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--blanc);margin-bottom:12px">Manquants avant '+oldThreshold+'</div>';
   if(!oldMiss.length){
-    h+='<div style="font-size:13px;color:#5de895">&#10003; Complet avant 1960&#160;!</div>';
+    h+='<div style="font-size:13px;color:#5de895">&#10003; Complet avant '+oldThreshold+'&#160;!</div>';
   }else{
     oldMiss.slice(0,12).forEach(function(m){
-      h+='<div style="padding:5px 0;border-bottom:1px solid rgba(42,48,64,.4);cursor:pointer;display:flex;justify-content:space-between" onclick="switchTab(0);setTimeout(function(){openModal('+m.id+')},150)">';
+      h+='<div style="padding:5px 0;border-bottom:1px solid rgba(42,48,64,.4);cursor:pointer;display:flex;justify-content:space-between" onclick="switchTab('+(isClub?3:0)+');setTimeout(function(){openModal('+m.id+')},150)">';
       h+='<span style="font-size:12px;color:var(--blanc)">'+m.match+'</span>';
       h+='<span style="font-size:11px;color:var(--gris)">'+m.date+'</span></div>';
     });
@@ -770,27 +898,28 @@ function renderStats(){
   }
   h+='</div></div>';
 
-  h+='<div id="market-box" style="display:none;background:var(--carte);border:1px solid rgba(144,176,240,.3);border-radius:10px;padding:18px 20px;margin-bottom:20px">';
-  h+='<div style="font-size:14px;font-weight:600;color:#90b0f0;margin-bottom:12px">&#128269; Prix du march&#233;</div>';
-  h+='<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">';
-  h+='<input type="text" id="mkt-q" placeholder="Ex: France Angleterre 1966" style="flex:1;min-width:200px;background:#0d1018;border:1px solid var(--bord);color:var(--blanc);padding:8px 12px;border-radius:5px;font-size:14px;outline:none" onkeydown="if(event.key===\'Enter\')searchMarket()">';
-  h+='<button class="btn" id="mkt-btn">Rechercher</button></div>';
-  h+='<div id="mkt-links" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
-  h+='<a id="lnk-mullock" href="https://www.mullockauctions.co.uk/search?q=france+rugby+programme" target="_blank" style="display:block;background:rgba(144,176,240,.08);border:1px solid rgba(144,176,240,.3);border-radius:7px;padding:10px 12px;text-decoration:none;transition:.2s" onmouseover="this.style.background=\'rgba(144,176,240,.15)\'" onmouseout="this.style.background=\'rgba(144,176,240,.08)\'">';
-  h+='<div style="font-size:12px;font-weight:600;color:#90b0f0">Mullock Jones</div>';
-  h+='<div style="font-size:11px;color:var(--gris);margin-top:2px">Enchères live &#8599;</div></a>';
-  h+='<a id="lnk-relics" href="https://www.rugbyrelics.com/Museum/search.asp?search=france+programme" target="_blank" style="display:block;background:rgba(93,232,149,.06);border:1px solid rgba(93,232,149,.25);border-radius:7px;padding:10px 12px;text-decoration:none;transition:.2s" onmouseover="this.style.background=\'rgba(93,232,149,.12)\'" onmouseout="this.style.background=\'rgba(93,232,149,.06)\'">';
-  h+='<div style="font-size:12px;font-weight:600;color:#5de895">Rugby Relics</div>';
-  h+='<div style="font-size:11px;color:var(--gris);margin-top:2px">Collection &#8599;</div></a>';
-  h+='<a id="lnk-ebay" href="https://www.ebay.fr/sch/i.html?_nkw=programme+rugby+france" target="_blank" style="display:block;background:rgba(240,208,128,.06);border:1px solid rgba(240,208,128,.25);border-radius:7px;padding:10px 12px;text-decoration:none;transition:.2s" onmouseover="this.style.background=\'rgba(240,208,128,.12)\'" onmouseout="this.style.background=\'rgba(240,208,128,.06)\'">';
-  h+='<div style="font-size:12px;font-weight:600;color:var(--or2)">eBay France</div>';
-  h+='<div style="font-size:11px;color:var(--gris);margin-top:2px">Ventes &#8599;</div></a>';
-  h+='</div>';
-  h+='<div style="font-size:12px;color:var(--gris)">Tape un match et clique Rechercher pour mettre à jour les liens, ou clique directement sur un site.</div>';
-  h+='</div>';
+  // Market box (France only)
+  if(!isClub){
+    h+='<div id="market-box" style="display:none;background:var(--carte);border:1px solid rgba(144,176,240,.3);border-radius:10px;padding:18px 20px;margin-bottom:20px">';
+    h+='<div style="font-size:14px;font-weight:600;color:#90b0f0;margin-bottom:12px">&#128269; Prix du march&#233;</div>';
+    h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
+    h+='<a href="https://www.mullockjones.co.uk/past-auctions" target="_blank" style="display:block;background:rgba(144,176,240,.08);border:1px solid rgba(144,176,240,.3);border-radius:7px;padding:10px 12px;text-decoration:none"><div style="font-size:12px;font-weight:600;color:#90b0f0">Mullock Jones &#8599;</div></a>';
+    h+='<a href="https://www.rugbyrelics.com" target="_blank" style="display:block;background:rgba(93,232,149,.06);border:1px solid rgba(93,232,149,.25);border-radius:7px;padding:10px 12px;text-decoration:none"><div style="font-size:12px;font-weight:600;color:#5de895">Rugby Relics &#8599;</div></a>';
+    h+='<a href="https://www.ebay.fr/sch/i.html?_nkw=programme+rugby+france" target="_blank" style="display:block;background:rgba(240,208,128,.06);border:1px solid rgba(240,208,128,.25);border-radius:7px;padding:10px 12px;text-decoration:none"><div style="font-size:12px;font-weight:600;color:var(--or2)">eBay France &#8599;</div></a>';
+    h+='</div></div>';
+  }
 
   document.getElementById('stats-content').innerHTML=h;
-  document.getElementById('mkt-btn').addEventListener('click', searchMarket);
+}
+
+function dcard(label,col,big,sub,id){
+  var click=id?' onclick="switchTab(0);setTimeout(function(){openModal('+id+')},150)" style="cursor:pointer"':'';
+  var s='<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:14px 16px"'+(id?click:'')+'>';
+  s+='<div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);margin-bottom:6px">'+label+'</div>';
+  s+='<div style="font-family:Bebas Neue,cursive;font-size:24px;color:'+col+';line-height:1">'+big+'</div>';
+  s+='<div style="font-size:12px;color:var(--blanc);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sub+'</div>';
+  s+='</div>';
+  return s;
 }
 
 function scard(val,col,title,sub){
@@ -1521,6 +1650,28 @@ function toggleMobileClubFilters(){
   var sb=document.querySelector('#view-club .sidebar');
   var ov=document.getElementById('mc-overlay');
   if(sb){sb.classList.toggle('mobile-open');ov.classList.toggle('on');}
+}
+
+
+/* Force PWA update */
+function forceUpdate(){
+  toast('&#8635; Mise &#224; jour en cours...');
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(regs){
+      regs.forEach(function(r){r.update();});
+    });
+    if('caches' in window){
+      caches.keys().then(function(keys){
+        return Promise.all(keys.map(function(k){return caches.delete(k);}));
+      }).then(function(){
+        setTimeout(function(){ location.reload(true); }, 600);
+      });
+    }else{
+      setTimeout(function(){ location.reload(true); }, 600);
+    }
+  }else{
+    location.reload(true);
+  }
 }
 
 /* PWA - Service Worker */
