@@ -1019,7 +1019,7 @@ function getExportData(filter) {
 function exportXLSX(filter) {
   // If no filter specified, show choice dialog
   if(!filter) {
-    var choice = prompt('Que voulez-vous exporter ?\n1 = Vue actuelle\n2 = Ma collection\n3 = Doublons\n4 = Manquants\n\nTapez 1, 2, 3 ou 4');
+    var choice = prompt('Que voulez-vous exporter ?\n1 = Vue actuelle (filtres + nation appliqu\u00e9s)\n2 = Ma collection\n3 = Doublons\n4 = Manquants\n\nTapez 1, 2, 3 ou 4');
     if(!choice) return;
     filter = choice==='2'?'collection':choice==='3'?'doublons':choice==='4'?'manquants':'current';
   }
@@ -1030,21 +1030,16 @@ function exportXLSX(filter) {
     return {
       'Date': m.date||'',
       'Match': m.match||'',
-      'Domicile': m.domicile||'',
-      'Ext\u00e9rieur': m.exterieur||'',
       'Lieu': m.lieu||'',
       'Score': m.score||'',
-      'En collection': m.programme?'Oui':'Non',
-      'Quantit\u00e9': m.quantite||0,
-      '\u00c9tat': m.etat||'',
-      'Cote': m.cote||'',
-      'Notes': m.notes||''
+      'Poss\u00e9d\u00e9': m.programme?'Oui':'Non',
+      'Cote': m.cote||''
     };
   });
   
   var ws = XLSX.utils.json_to_sheet(rows);
   // Column widths
-  ws['!cols'] = [{wch:12},{wch:30},{wch:20},{wch:20},{wch:35},{wch:10},{wch:12},{wch:8},{wch:12},{wch:10},{wch:30}];
+  ws['!cols'] = [{wch:12},{wch:32},{wch:38},{wch:12},{wch:10},{wch:10}];
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, label);
   XLSX.writeFile(wb, 'rugby_' + label.toLowerCase().replace(/ /g,'_') + '.xlsx');
@@ -1053,7 +1048,7 @@ function exportXLSX(filter) {
 
 function exportPDF(filter) {
   if(!filter) {
-    var choice = prompt('Que voulez-vous exporter ?\n1 = Vue actuelle\n2 = Ma collection\n3 = Doublons\n4 = Manquants\n\nTapez 1, 2, 3 ou 4');
+    var choice = prompt('Que voulez-vous exporter ?\n1 = Vue actuelle (filtres + nation appliqu\u00e9s)\n2 = Ma collection\n3 = Doublons\n4 = Manquants\n\nTapez 1, 2, 3 ou 4');
     if(!choice) return;
     filter = choice==='2'?'collection':choice==='3'?'doublons':choice==='4'?'manquants':'current';
   }
