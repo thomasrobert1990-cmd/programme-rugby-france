@@ -654,7 +654,7 @@ function openModal(id){
   }else{
     var m=allData.filter(function(x){return x.id===id;})[0];if(!m)return;
     document.getElementById('m-t').textContent=m.match||'Programme';
-    document.getElementById('m-s').textContent=(m.date||'')+(m.lieu?' &#183; '+m.lieu:'');
+    document.getElementById('m-s').textContent=(m.date||'')+(m.lieu?'  •  '+m.lieu:'');
     document.getElementById('btn-del').style.display='block';
     fillForm(m);
   }
