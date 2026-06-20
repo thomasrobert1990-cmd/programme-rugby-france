@@ -310,17 +310,15 @@ textarea.fi{resize:vertical;min-height:58px}
 
 <div id="ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;overflow-y:auto;padding:16px" onclick="closeOv(event)">
   <div class="modal">
-    <div class="mh">
-      <div style="display:flex;align-items:center;gap:10px;flex:1">
-        <button class="mnav" id="m-prev" onclick="navModal(-1)" title="Pr&#233;c&#233;dent">&#8249;</button>
-        <div style="flex:1">
-          <div class="mt" id="m-t">Programme</div>
-          <div class="ms" id="m-s"></div>
-        </div>
-        <button class="mnav" id="m-next" onclick="navModal(1)" title="Suivant">&#8250;</button>
+    <div class="mh" style="display:flex;align-items:center;gap:10px">
+      <button class="mnav" id="m-prev" onclick="navModal(-1)" title="Pr&#233;c&#233;dent">&#8249;</button>
+      <button class="mnav" id="m-next" onclick="navModal(1)" title="Suivant">&#8250;</button>
+      <div style="flex:1;min-width:0">
+        <div class="mt" id="m-t">Programme</div>
+        <div class="ms" id="m-s"></div>
       </div>
       <span class="mpos" id="m-pos"></span>
-      <button class="mc" onclick="closeModal()">&#10005;</button>
+      <button class="mc" onclick="closeModal()" style="flex-shrink:0">&#10005;</button>
     </div>
     <div class="mb">
       <div class="fg2">
