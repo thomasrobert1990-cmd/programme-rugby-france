@@ -244,6 +244,7 @@ textarea.fi{resize:vertical;min-height:58px}
   <aside class="sidebar" id="sidebar-club">
     <div class="sb-t">&#128269; Filtres</div>
     <div class="fg"><span class="fl">Recherche</span><input type="text" id="cf-s" placeholder="&#201;quipe, lieu..."></div>
+    <div class="fg"><span class="fl">&#201;quipe</span><select id="cf-t" onchange="applyClubF()"><option value="">Toutes</option></select></div>
     <div class="fg"><span class="fl">P&#233;riode</span><div class="rrow"><input type="text" id="cf-y1" placeholder="1892" maxlength="4"><span>&#8594;</span><input type="text" id="cf-y2" placeholder="2025" maxlength="4"></div></div>
     <div class="fg"><span class="fl">Possession</span><div class="pbtns">
       <button class="pb p-all" id="cpb-all" onclick="setClubProg('all')">Tous</button>
@@ -444,11 +445,30 @@ async function loadAll(){
 }
 
 function buildTeams(){
-  var t={};allData.forEach(function(m){if(m.domicile)t[m.domicile]=1;if(m.exterieur)t[m.exterieur]=1;});
+  // France dropdown: only teams from France matches (non-club)
+  var t={};
+  allData.forEach(function(m){
+    if(m.categorie==='club')return;
+    if(m.domicile)t[m.domicile]=1;
+    if(m.exterieur)t[m.exterieur]=1;
+  });
   var s=document.getElementById('f-t');
   Object.keys(t).sort(function(a,b){return a.localeCompare(b,'fr');}).forEach(function(v){
     var o=document.createElement('option');o.value=v;o.textContent=v;s.appendChild(o);
   });
+  // Club dropdown: only teams from club finals
+  var tc={};
+  allData.forEach(function(m){
+    if(m.categorie!=='club')return;
+    if(m.domicile)tc[m.domicile]=1;
+    if(m.exterieur)tc[m.exterieur]=1;
+  });
+  var sc=document.getElementById('cf-t');
+  if(sc){
+    Object.keys(tc).sort(function(a,b){return a.localeCompare(b,'fr');}).forEach(function(v){
+      var o=document.createElement('option');o.value=v;o.textContent=v;sc.appendChild(o);
+    });
+  }
 }
 
 function updateStats(){
@@ -1391,11 +1411,13 @@ function setClubProg(v){
 function applyClubF(){
   var s=(document.getElementById('cf-s')||{}).value||'';
   s=nm(s.trim());
+  var ct=(document.getElementById('cf-t')||{}).value||'';
   var y1=+(document.getElementById('cf-y1')||{}).value||1800;
   var y2=+(document.getElementById('cf-y2')||{}).value||2100;
   var srt=(document.getElementById('csrt')||{}).value||'da';
   clubFiltered=allData.filter(function(m){
     if(m.categorie!=='club')return false;
+    if(ct&&m.domicile!==ct&&m.exterieur!==ct)return false;
     if(clubPf==='oui'&&!m.programme)return false;
     if(clubPf==='non'&&m.programme)return false;
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
@@ -1453,6 +1475,7 @@ function goClubP(p){var tot=Math.ceil(clubFiltered.length/clubPerPage);if(p<1||p
 
 function resetClubF(){
   ['cf-s','cf-y1','cf-y2'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var ct=document.getElementById('cf-t');if(ct)ct.value='';
   setClubProg('all');
 }
 
