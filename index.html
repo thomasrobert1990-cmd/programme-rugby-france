@@ -183,7 +183,8 @@ textarea.fi{resize:vertical;min-height:58px}
     <div class="hs"><span class="v" id="hpc">&#8212;</span><span class="l">Compl&#233;t&#233;</span></div>
     <div class="hs"><span class="v" id="hm">&#8212;</span><span class="l">Manquants</span></div>
   </div>
-  <button onclick="forceUpdate()" title="Mettre à jour l'app" style="background:rgba(255,255,255,.08);border:1px solid var(--bord);color:var(--gris);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:16px;margin-left:10px">&#8635;</button>
+  <button onclick="backupData()" title="Sauvegarder la base (téléchargement)" style="background:rgba(93,232,149,.12);border:1px solid rgba(93,232,149,.3);color:#5de895;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:16px;margin-left:10px">&#128190;</button>
+  <button onclick="forceUpdate()" title="Mettre à jour l'app" style="background:rgba(255,255,255,.08);border:1px solid var(--bord);color:var(--gris);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:16px;margin-left:6px">&#8635;</button>
 </header>
 
 <div class="tabs-nav">
@@ -1673,6 +1674,21 @@ async function toggleFav(id){
     m.favori=!newVal;applyF();
     toast('Erreur de sauvegarde');
   }
+}
+
+
+/* SAUVEGARDE */
+function backupData(){
+  if(!allData.length){toast('Aucune donn\u00e9e \u00e0 sauvegarder');return;}
+  var blob=new Blob([JSON.stringify(allData,null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  var d=new Date();
+  a.download='backup_rugby_'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('&#128190; Sauvegarde t\u00e9l\u00e9charg\u00e9e ('+allData.length+' programmes)');
 }
 
 /* Force PWA update */
