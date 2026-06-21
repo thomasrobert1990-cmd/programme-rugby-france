@@ -1,5 +1,5 @@
 // Service Worker - Ma Collection Rugby
-const CACHE = 'rugby-v13';
+const CACHE = 'rugby-v14';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', function(e){
