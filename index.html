@@ -852,7 +852,7 @@ function renderStatsFor(scope){
   Object.keys(decades).sort().forEach(function(dec){
     var d=decades[dec],p=Math.round(d.have/d.total*100);
     var col=p>=70?'#5de895':p>=40?'var(--or)':'#e06060';
-    h+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+    h+='<div style="margin-bottom:10px;cursor:pointer" onclick="filterFromStats(\'decade\','+dec+')" title="Voir ces programmes"><div style="display:flex;justify-content:space-between;margin-bottom:4px">';
     h+='<span style="font-size:13px;color:var(--blanc)">'+dec+'s</span>';
     h+='<span style="font-size:13px;color:var(--gris)">'+d.have+'/'+d.total+' <b style="color:'+col+'">'+p+'%</b></span></div>';
     h+='<div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+col+';border-radius:4px"></div></div></div>';
@@ -874,7 +874,7 @@ function renderStatsFor(scope){
     compArr.forEach(function(o){
       var p=Math.round(o.h/o.t*100);
       var col=p>=70?'#5de895':p>=40?'var(--or)':'#e06060';
-      h+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+      h+='<div style="margin-bottom:10px;cursor:pointer" onclick="filterFromStats(\'comp\',\''+o.name.replace(/'/g,"\\'")+'\')" title="Voir ces programmes"><div style="display:flex;justify-content:space-between;margin-bottom:4px">';
       h+='<span style="font-size:13px;color:var(--blanc)">'+o.name+'</span>';
       h+='<span style="font-size:13px;color:var(--gris)">'+o.h+'/'+o.t+' <b style="color:'+col+'">'+p+'%</b></span></div>';
       h+='<div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+col+';border-radius:4px"></div></div></div>';
@@ -889,7 +889,7 @@ function renderStatsFor(scope){
     h+='<div style="font-size:14px;font-weight:600;color:var(--blanc);margin-bottom:12px">Top adversaires</div>';
     topOpp.forEach(function(o){
       var p=Math.round(o.h/o.t*100);
-      h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(42,48,64,.4)">';
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(42,48,64,.4);cursor:pointer" onclick="filterFromStats(\'opp\',\''+o.name.replace(/'/g,"\\'")+'\')" title="Voir ces matchs">';
       h+='<span style="font-size:13px;color:var(--blanc)">'+o.name+'</span>';
       h+='<span style="font-size:12px;color:var(--gris)">'+o.h+'/'+o.t+' <span style="color:var(--or)">'+p+'%</span></span></div>';
     });
@@ -1739,6 +1739,47 @@ function toggleMobileClubFilters(){
 }
 
 
+
+
+/* Filtrer depuis les stats (clic sur barre) */
+function filterFromStats(type, value){
+  var isClub = (window._statsScope==='club');
+  // Reset filters first
+  if(isClub){
+    if(typeof resetClubF==='function')resetClubF();
+  } else {
+    if(typeof resetF==='function')resetF();
+  }
+  if(type==='comp'){
+    // Competition filter (France only)
+    var fc=document.getElementById('f-comp');
+    if(fc){fc.value=value;}
+    switchTab(0);
+    setTimeout(function(){var fc2=document.getElementById('f-comp');if(fc2)fc2.value=value;applyF();window.scrollTo(0,0);},100);
+  } else if(type==='decade'){
+    var y1=+value, y2=+value+9;
+    if(isClub){
+      switchTab(3);
+      setTimeout(function(){
+        var e1=document.getElementById('cf-y1'),e2=document.getElementById('cf-y2');
+        if(e1)e1.value=y1;if(e2)e2.value=y2;applyClubF();window.scrollTo(0,0);
+      },100);
+    } else {
+      switchTab(0);
+      setTimeout(function(){
+        var e1=document.getElementById('f-y1'),e2=document.getElementById('f-y2');
+        if(e1)e1.value=y1;if(e2)e2.value=y2;applyF();window.scrollTo(0,0);
+      },100);
+    }
+  } else if(type==='opp'){
+    // Opponent filter (France)
+    switchTab(0);
+    setTimeout(function(){
+      var ft=document.getElementById('f-t');
+      if(ft)ft.value=value;applyF();window.scrollTo(0,0);
+    },100);
+  }
+}
 
 /* FAVORIS */
 async function toggleFav(id){
