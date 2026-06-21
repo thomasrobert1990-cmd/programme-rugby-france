@@ -278,6 +278,7 @@ textarea.fi{resize:vertical;min-height:58px}
           <option value="dd">Date &#8595;</option>
           <option value="az">Match A&#8594;Z</option>
         </select>
+        <button class="btn-o" id="cviewtoggle" onclick="toggleClubView()" title="Basculer vue">&#9783; Liste</button>
         <label>Par page&#160;:</label>
         <select id="cpp" onchange="changeClubPerPage(this.value)">
           <option value="24">24</option>
@@ -1515,7 +1516,7 @@ function buildTimeline() {
 
 
 /* ===== CLUB TAB ===== */
-var clubFiltered=[], clubPage=1, clubPf='all', clubPerPage=24;
+var clubFiltered=[], clubPage=1, clubPf='all', clubPerPage=24, clubViewMode='cards';
 
 function changeClubPerPage(v){
   clubPerPage = +v || 24;
@@ -1556,9 +1557,19 @@ function applyClubF(){
   renderClub();
 }
 
+function toggleClubView(){
+  clubViewMode = clubViewMode==='cards'?'list':'cards';
+  var btn=document.getElementById('cviewtoggle');
+  if(btn)btn.innerHTML = clubViewMode==='cards'?'&#9783; Liste':'&#9638; Cartes';
+  var g=document.getElementById('cgrid');
+  if(g)g.className = clubViewMode==='list'?'listview':'grid';
+  renderClub();
+}
+
 function renderClub(){
   var g=document.getElementById('cgrid');
   if(!g)return;
+  if(clubViewMode==='list'){ renderClubList(); return; }
   if(!clubFiltered.length){g.innerHTML='<div class="no-res">&#127942; Aucune finale</div>';document.getElementById('cpag').innerHTML='';return;}
   var start=(clubPage-1)*clubPerPage,page=clubFiltered.slice(start,start+clubPerPage);
   g.innerHTML=page.map(function(m){
@@ -1591,6 +1602,45 @@ function renderClub(){
   for(var i=1;i<=tot;i++){
     h+='<button class="pgb'+(i===clubPage?' on':'')+'" onclick="goClubP('+i+')">'+i+'</button>';
   }
+  h+='<button class="pgb" onclick="goClubP('+(clubPage+1)+')" '+(clubPage===tot?'disabled':'')+'>&#8250;</button>';
+  pag.innerHTML=h;
+}
+
+
+function renderClubList(){
+  var g=document.getElementById('cgrid');
+  if(!clubFiltered.length){g.innerHTML='<div class="no-res">&#127942; Aucune finale</div>';document.getElementById('cpag').innerHTML='';return;}
+  var start=(clubPage-1)*clubPerPage,page=clubFiltered.slice(start,start+clubPerPage);
+  var rows=page.map(function(m){
+    var badge=m.programme?'<span style="color:#5de895">&#10003;</span>':'<span style="color:#e06060">&#10007;</span>';
+    var fav=m.favori?'<span style="color:#ffd966">&#9733;</span>':'';
+    var scan=m.image_couverture?'&#128247;':'';
+    return '<tr onclick="openModal('+m.id+')" style="cursor:pointer;border-bottom:1px solid rgba(42,48,64,.4)">'
+      +'<td style="padding:8px 10px;white-space:nowrap;color:var(--gris);font-size:12px">'+(m.date||'')+'</td>'
+      +'<td style="padding:8px 10px;color:var(--blanc);font-weight:600;font-size:13px">'+(m.match||'')+' '+fav+'</td>'
+      +'<td style="padding:8px 10px;color:var(--gris);font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(m.lieu||'')+'</td>'
+      +'<td style="padding:8px 10px;color:var(--or2);font-size:12px;white-space:nowrap">'+(m.score||'')+'</td>'
+      +'<td style="padding:8px 10px;text-align:center">'+badge+'</td>'
+      +'<td style="padding:8px 10px;text-align:center;font-size:13px">'+scan+'</td>'
+      +'<td style="padding:8px 10px;color:var(--or);font-size:12px;white-space:nowrap">'+(m.cote||'')+'</td>'
+      +'</tr>';
+  }).join('');
+  g.innerHTML='<table style="width:100%;border-collapse:collapse">'
+    +'<thead><tr style="border-bottom:2px solid var(--or)">'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Date</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Finale</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Lieu</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Score</th>'
+    +'<th style="padding:8px 10px;font-size:11px;color:var(--gris)">&#10003;</th>'
+    +'<th style="padding:8px 10px;font-size:11px;color:var(--gris)">&#128247;</th>'
+    +'<th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gris);text-transform:uppercase">Cote</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+  // pagination
+  var tot=Math.ceil(clubFiltered.length/clubPerPage),pag=document.getElementById('cpag');
+  if(!pag)return;
+  if(tot<=1){pag.innerHTML='';return;}
+  var h='<button class="pgb" onclick="goClubP('+(clubPage-1)+')" '+(clubPage===1?'disabled':'')+'>&#8249;</button>';
+  for(var i=1;i<=tot;i++)h+='<button class="pgb'+(i===clubPage?' on':'')+'" onclick="goClubP('+i+')">'+i+'</button>';
   h+='<button class="pgb" onclick="goClubP('+(clubPage+1)+')" '+(clubPage===tot?'disabled':'')+'>&#8250;</button>';
   pag.innerHTML=h;
 }
