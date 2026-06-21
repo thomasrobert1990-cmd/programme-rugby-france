@@ -209,6 +209,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <button class="pb" id="pb-fav" onclick="setProg('fav')">&#9733; Favoris</button>
     </div></div>
     <div class="fg"><span class="fl">&#201;tat</span><select id="f-e"><option value="">Tous</option><option>Excellent</option><option>Tr&#232;s bon</option><option>Bon</option><option>Moyen</option><option>Mauvais</option></select></div>
+    <div class="fg"><span class="fl">Comp&#233;tition</span><select id="f-comp" onchange="applyF()"><option value="">Toutes</option></select></div>
     <div class="fg"><span class="fl">Lieu</span><input type="text" id="f-l" placeholder="France, Twickenham..."></div>
     <button class="btn-reset" onclick="resetF()">&#10005; Effacer</button>
   </aside>
@@ -332,6 +333,7 @@ textarea.fi{resize:vertical;min-height:58px}
         <div><span class="fl2">En collection&#160;?</span><select class="fi" id="i-prog"><option value="1">&#10003; Oui</option><option value="0">&#10007; Non</option></select></div>
         <div><span class="fl2">Quantit&#233;</span><input class="fi" type="number" id="i-qty" min="0" value="1"></div>
         <div><span class="fl2">&#201;tat</span><select class="fi" id="i-etat"><option value="">&#8212;</option><option>Excellent</option><option>Tr&#232;s bon</option><option>Bon</option><option>Moyen</option><option>Mauvais</option></select></div>
+        <div><span class="fl2">Comp&#233;tition</span><select class="fi" id="i-type"><option value="">&#8212;</option><option>Test match</option><option>Tournoi des 5 Nations</option><option>Tournoi des 6 Nations</option><option>Coupe du Monde</option><option>Tourn&#233;e</option><option>Tourn&#233;e d'automne</option><option>Match amical</option><option>Coupe FIRA / Europe</option><option>Coupe Latine</option><option>Jeux Olympiques</option><option>Autre</option></select></div>
         <div><span class="fl2">Cote</span><input class="fi" type="text" id="i-cote" placeholder="45 &#8364;"></div>
         <div class="full"><span class="fl2">Notes</span><textarea class="fi" id="i-notes" placeholder="D&#233;dicaces, provenance..."></textarea></div>
       </div>
@@ -463,6 +465,18 @@ function buildTeams(){
   Object.keys(t).sort(function(a,b){return a.localeCompare(b,'fr');}).forEach(function(v){
     var o=document.createElement('option');o.value=v;o.textContent=v;s.appendChild(o);
   });
+  // Competition dropdown (France)
+  var comps={};
+  allData.forEach(function(m){
+    if(m.categorie==='club')return;
+    if(m.type_match)comps[m.type_match]=1;
+  });
+  var sco=document.getElementById('f-comp');
+  if(sco){
+    Object.keys(comps).sort().forEach(function(v){
+      var o=document.createElement('option');o.value=v;o.textContent=v;sco.appendChild(o);
+    });
+  }
   // Club dropdown: only teams from club finals
   var tc={};
   allData.forEach(function(m){
@@ -524,6 +538,8 @@ function applyF(){
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
     if(t&&m.domicile!==t&&m.exterieur!==t)return false;
     if(e&&m.etat!==e)return false;
+    var comp=(document.getElementById('f-comp')||{}).value||'';
+    if(comp&&m.type_match!==comp)return false;
     if(l&&nm(m.lieu||'').indexOf(l)<0)return false;
     if(s){var h=nm((m.match||'')+' '+(m.date||'')+' '+(m.lieu||'')+' '+(m.score||'')+' '+(m.notes||''));if(h.indexOf(s)<0)return false;}
     return true;
@@ -538,6 +554,7 @@ function applyF(){
 }
 
 function resetF(){
+  var fc=document.getElementById('f-comp');if(fc)fc.value='';
   ['f-s','f-y1','f-y2','f-l'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('f-t').value='';document.getElementById('f-e').value='';
   setProg('all');
@@ -649,14 +666,14 @@ function openModal(id){
 }
 function clearForm(){
   ['i-date','i-score','i-dom','i-ext','i-lieu','i-cote','i-notes'].forEach(function(id){document.getElementById(id).value='';});
-  document.getElementById('i-prog').value='1';document.getElementById('i-etat').value='';document.getElementById('i-qty').value='1';
+  document.getElementById('i-prog').value='1';document.getElementById('i-etat').value='';document.getElementById('i-type').value='';document.getElementById('i-qty').value='1';
   setImg('c','');setImg('f','');
 }
 function fillForm(m){
   document.getElementById('i-date').value=m.date||'';document.getElementById('i-score').value=m.score||'';
   document.getElementById('i-dom').value=m.domicile||'';document.getElementById('i-ext').value=m.exterieur||'';
   document.getElementById('i-lieu').value=m.lieu||'';document.getElementById('i-prog').value=m.programme?'1':'0';
-  document.getElementById('i-etat').value=m.etat||'';document.getElementById('i-cote').value=m.cote||'';
+  document.getElementById('i-etat').value=m.etat||'';document.getElementById('i-type').value=m.type_match||'';document.getElementById('i-cote').value=m.cote||'';
   document.getElementById('i-qty').value=m.quantite||0;document.getElementById('i-notes').value=m.notes||'';
   iC=m.image_couverture||'';iF=m.image_feuille||'';setImg('c',iC);setImg('f',iF);
 }
@@ -704,6 +721,7 @@ async function saveRec(){
   var rec={date:date,year:year,match:match,domicile:dom,exterieur:ext,
     lieu:document.getElementById('i-lieu').value.trim(),programme:document.getElementById('i-prog').value==='1',
     score:document.getElementById('i-score').value.trim(),etat:document.getElementById('i-etat').value,
+    type_match:document.getElementById('i-type').value,
     cote:document.getElementById('i-cote').value.trim(),quantite:+document.getElementById('i-qty').value||0,
     notes:document.getElementById('i-notes').value.trim(),image_couverture:iC,image_feuille:iF};
   try{
@@ -840,6 +858,29 @@ function renderStatsFor(scope){
     h+='<div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+col+';border-radius:4px"></div></div></div>';
   });
   h+='</div>';
+
+  // Competition breakdown (France only)
+  if(!isClub){
+    var comps={};
+    data.forEach(function(m){
+      var t=m.type_match||'Autre';
+      if(!comps[t])comps[t]={total:0,have:0};
+      comps[t].total++;if(m.programme)comps[t].have++;
+    });
+    var compArr=Object.keys(comps).map(function(k){return{name:k,t:comps[k].total,h:comps[k].have};});
+    compArr.sort(function(a,b){return b.t-a.t;});
+    h+='<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:18px 20px;margin-bottom:20px">';
+    h+='<div style="font-size:14px;font-weight:600;color:var(--blanc);margin-bottom:14px">Compl&#233;tude par comp&#233;tition</div>';
+    compArr.forEach(function(o){
+      var p=Math.round(o.h/o.t*100);
+      var col=p>=70?'#5de895':p>=40?'var(--or)':'#e06060';
+      h+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+      h+='<span style="font-size:13px;color:var(--blanc)">'+o.name+'</span>';
+      h+='<span style="font-size:13px;color:var(--gris)">'+o.h+'/'+o.t+' <b style="color:'+col+'">'+p+'%</b></span></div>';
+      h+='<div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+col+';border-radius:4px"></div></div></div>';
+    });
+    h+='</div>';
+  }
 
   // Two columns: opponents (France) + old missing
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" class="stats-2col">';
