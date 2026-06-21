@@ -257,6 +257,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <button class="pb p-all" id="cpb-all" onclick="setClubProg('all')">Tous</button>
       <button class="pb" id="cpb-oui" onclick="setClubProg('oui')">&#10003; Collection</button>
       <button class="pb" id="cpb-non" onclick="setClubProg('non')">&#10007; Manquants</button>
+      <button class="pb" id="cpb-fav" onclick="setClubProg('fav')">&#9733; Favoris</button>
     </div></div>
     <button class="btn-reset" onclick="resetClubF()">&#10005; Effacer</button>
   </aside>
@@ -1524,7 +1525,7 @@ function changeClubPerPage(v){
 
 function setClubProg(v){
   clubPf=v;
-  ['all','oui','non'].forEach(function(x){var el=document.getElementById('cpb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
+  ['all','oui','non','fav'].forEach(function(x){var el=document.getElementById('cpb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
   clubPage=1;applyClubF();
 }
 
@@ -1540,6 +1541,7 @@ function applyClubF(){
     if(ct&&m.domicile!==ct&&m.exterieur!==ct)return false;
     if(clubPf==='oui'&&!m.programme)return false;
     if(clubPf==='non'&&m.programme)return false;
+    if(clubPf==='fav'&&!m.favori)return false;
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
     if(s){var h=nm((m.match||'')+' '+(m.date||'')+' '+(m.lieu||''));if(h.indexOf(s)<0)return false;}
     return true;
@@ -1568,9 +1570,11 @@ function renderClub(){
       if(m.cote)ex+='<span style="font-size:11px;color:var(--or2)">'+m.cote+'</span>';
       ex+='</div>';
     }
+    var favStar='<span onclick="event.stopPropagation();toggleFav('+m.id+')" style="position:absolute;top:6px;right:6px;font-size:20px;cursor:pointer;color:'+(m.favori?'#ffd966':'rgba(255,255,255,.3)')+';text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:5" title="Favori">&#9733;</span>';
     return'<div class="card" onclick="openModal('+m.id+')">'
       +'<div class="ci" style="position:relative;background:linear-gradient(135deg,#2a1800,#1a1200)">'+img
       +'<span style="position:absolute;top:6px;left:6px;background:rgba(212,160,40,.9);color:#111;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700">&#127942; Finale</span>'
+      +favStar
       +'</div>'
       +'<div class="cb">'
       +'<div class="cd">'+m.date+'</div>'
