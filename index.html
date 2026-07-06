@@ -53,6 +53,7 @@ header{background:linear-gradient(135deg,#0a0d14,#001a4a,#1a000a);border-bottom:
 .pb.p-scan{background:rgba(144,176,240,.3);border-color:#90b0f0;color:#c0d8ff}
 .pb.p-club{background:rgba(212,160,40,.3);border-color:#d4a028;color:#f5d060}
 .pb.p-fav{background:rgba(245,200,76,.25);border-color:#f5c84c;color:#ffd966}
+.pb.p-sans{background:rgba(140,140,160,.25);border-color:#8c8ca0;color:#b0b0c0}
 .pb.p-france{background:rgba(0,35,149,.4);border-color:#002395;color:#7090ff}
 .btn-reset{display:block;width:100%;margin-top:8px;padding:7px;background:rgba(180,32,32,.1);border:1px solid rgba(184,32,32,.3);color:#e06060;border-radius:5px;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif}
 .main{flex:1;padding:16px 20px;overflow-y:auto}
@@ -207,6 +208,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <button class="pb" id="pb-non" onclick="setProg('non')">&#10007; Manquants</button>
       <button class="pb" id="pb-scan" onclick="setProg('scan')">&#128247; Scann&#233;s</button>
       <button class="pb" id="pb-fav" onclick="setProg('fav')">&#9733; Favoris</button>
+      <button class="pb" id="pb-sans" onclick="setProg('sans')">&#8709; Sans prog.</button>
     </div></div>
     <div class="fg"><span class="fl">&#201;tat</span><select id="f-e"><option value="">Tous</option><option>Excellent</option><option>Tr&#232;s bon</option><option>Bon</option><option>Moyen</option><option>Mauvais</option></select></div>
     <div class="fg"><span class="fl">Comp&#233;tition</span><select id="f-comp" onchange="applyF()"><option value="">Toutes</option></select></div>
@@ -494,12 +496,16 @@ function buildTeams(){
 
 function updateStats(){
   var france=allData.filter(function(m){return m.categorie!=='club';});
-  var clubs=allData.filter(function(m){return m.categorie==='club';});
-  var tot=france.length, p=france.filter(function(m){return m.programme;}).length;
+  var tot=france.length;
+  var p=france.filter(function(m){return m.programme;}).length;
+  // Programmes collectionnables = total - sans programme
+  var sansProg=france.filter(function(m){return m.sans_programme;}).length;
+  var collectionnable=tot-sansProg;
+  var manquants=collectionnable-p;
   document.getElementById('ht').textContent=tot;
   document.getElementById('hp').textContent=p;
-  document.getElementById('hpc').textContent=tot?Math.round(p/tot*100)+'%':'0%';
-  document.getElementById('hm').textContent=tot-p;
+  document.getElementById('hpc').textContent=collectionnable?Math.round(p/collectionnable*100)+'%':'0%';
+  document.getElementById('hm').textContent=manquants;
 }
 
 function nm(s){
@@ -517,7 +523,7 @@ function changePerPage(v){
 
 function setProg(v){
   pf=v;
-  ['all','oui','non','scan','fav'].forEach(function(x){var el=document.getElementById('pb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
+  ['all','oui','non','scan','fav','sans'].forEach(function(x){var el=document.getElementById('pb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
   curPage=1;applyF();
 }
 
@@ -534,6 +540,8 @@ function applyF(){
     if(pf==='non'&&m.programme)return false;
     if(pf==='scan'&&(!m.image_couverture||!m.image_couverture.trim()))return false;
     if(pf==='fav'&&!m.favori)return false;
+    if(pf==='sans'&&!m.sans_programme)return false;
+    if(pf==='non'&&m.sans_programme)return false;
     if(m.categorie==='club')return false;
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
     if(t&&m.domicile!==t&&m.exterieur!==t)return false;
@@ -576,7 +584,7 @@ function render(){
   g.innerHTML=page.map(function(m){
     var img=m.image_couverture?'<img src="'+m.image_couverture+'" loading="lazy" alt="">':'<span class="ni">&#127945;</span>';
     var isClub=m.categorie==='club';
-    var bp=m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>';
+    var bp=m.sans_programme?'<span class="bp" style="background:rgba(140,140,160,.25);color:#b0b0c0;border:1px solid rgba(140,140,160,.4)">&#8709; Sans programme</span>':(m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>');
     var clubBadge=isClub?'<span style="position:absolute;top:6px;left:6px;background:rgba(212,160,40,.9);color:#111;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700">&#127942; Club</span>':'';
     var favStar='<span onclick="event.stopPropagation();toggleFav('+m.id+')" style="position:absolute;top:6px;right:6px;font-size:20px;cursor:pointer;color:'+(m.favori?'#ffd966':'rgba(255,255,255,.3)')+';text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:5" title="Favori">&#9733;</span>';
     var scanBadge=m.image_couverture?'<span style="position:absolute;top:6px;right:6px;background:rgba(144,176,240,.85);color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:600">&#128247;</span>':'';
@@ -720,6 +728,7 @@ async function saveRec(){
   var match=ext?dom+' – '+ext:dom;
   var rec={date:date,year:year,match:match,domicile:dom,exterieur:ext,
     lieu:document.getElementById('i-lieu').value.trim(),programme:document.getElementById('i-prog').value==='1',
+    sans_programme:document.getElementById('i-prog').value==='2',
     score:document.getElementById('i-score').value.trim(),etat:document.getElementById('i-etat').value,
     type_match:document.getElementById('i-type').value,
     cote:document.getElementById('i-cote').value.trim(),quantite:+document.getElementById('i-qty').value||0,
@@ -761,7 +770,9 @@ function renderStatsFor(scope){
   var data=allData.filter(function(m){return isClub?m.categorie==='club':m.categorie!=='club';});
   var total=data.length;
   var have=data.filter(function(m){return m.programme;}).length;
-  var pct=total?Math.round(have/total*100):0;
+  var sansProg=data.filter(function(m){return m.sans_programme;}).length;
+  var collectionnable=total-sansProg;
+  var pct=collectionnable?Math.round(have/collectionnable*100):0;
   var withImg=data.filter(function(m){return m.image_couverture;}).length;
   var withCote=data.filter(function(m){return m.cote&&m.cote.trim();});
   var totalVal=0;
@@ -822,7 +833,7 @@ function renderStatsFor(scope){
   h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">';
   h+=scard(have,'#5de895','Programmes','en collection');
   h+=scard(pct+'%','var(--or)','Compl&#233;tude','de la collection');
-  h+=scard(total-have,'#e06060','Manquants','programmes');
+  h+=scard(collectionnable-have,'#e06060','Manquants','programmes');
   h+=scard(withImg,'#90b0f0','Scann&#233;s','couvertures en ligne');
   h+='</div>';
 
