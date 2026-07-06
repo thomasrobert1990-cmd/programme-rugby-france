@@ -261,6 +261,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <button class="pb" id="cpb-oui" onclick="setClubProg('oui')">&#10003; Collection</button>
       <button class="pb" id="cpb-non" onclick="setClubProg('non')">&#10007; Manquants</button>
       <button class="pb" id="cpb-fav" onclick="setClubProg('fav')">&#9733; Favoris</button>
+      <button class="pb" id="cpb-sans" onclick="setClubProg('sans')">&#8709; Sans prog.</button>
     </div></div>
     <button class="btn-reset" onclick="resetClubF()">&#10005; Effacer</button>
   </aside>
@@ -610,7 +611,7 @@ function render(){
 
 function renderList(page,g){
   var rows=page.map(function(m){
-    var badge=m.programme?'<span style="color:#5de895">&#10003;</span>':'<span style="color:#e06060">&#10007;</span>';
+    var badge=m.sans_programme?'<span style="color:#8c8ca0">&#8709;</span>':(m.programme?'<span style="color:#5de895">&#10003;</span>':'<span style="color:#e06060">&#10007;</span>');
     var qty=m.quantite>1?' <span style="color:var(--or);font-size:11px">&#215;'+m.quantite+'</span>':'';
     var scan=m.image_couverture?'&#128247;':'';
     return '<tr onclick="openModal('+m.id+')" style="cursor:pointer;border-bottom:1px solid rgba(42,48,64,.4)">'
@@ -1578,7 +1579,7 @@ function changeClubPerPage(v){
 
 function setClubProg(v){
   clubPf=v;
-  ['all','oui','non','fav'].forEach(function(x){var el=document.getElementById('cpb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
+  ['all','oui','non','fav','sans'].forEach(function(x){var el=document.getElementById('cpb-'+x);if(el)el.className='pb'+(x===v?' p-'+x:'');});
   clubPage=1;applyClubF();
 }
 
@@ -1595,6 +1596,8 @@ function applyClubF(){
     if(clubPf==='oui'&&!m.programme)return false;
     if(clubPf==='non'&&m.programme)return false;
     if(clubPf==='fav'&&!m.favori)return false;
+    if(clubPf==='sans'&&!m.sans_programme)return false;
+    if(clubPf==='non'&&m.sans_programme)return false;
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
     if(s){var h=nm((m.match||'')+' '+(m.date||'')+' '+(m.lieu||''));if(h.indexOf(s)<0)return false;}
     return true;
@@ -1626,7 +1629,7 @@ function renderClub(){
   var start=(clubPage-1)*clubPerPage,page=clubFiltered.slice(start,start+clubPerPage);
   g.innerHTML=page.map(function(m){
     var img=m.image_couverture?'<img src="'+m.image_couverture+'" loading="lazy" alt="">':'<span class="ni">&#127942;</span>';
-    var bp=m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>';
+    var bp=m.sans_programme?'<span class="bp" style="background:rgba(140,140,160,.25);color:#b0b0c0;border:1px solid rgba(140,140,160,.4)">&#8709; Sans programme</span>':(m.programme?'<span class="bp y">&#10003; Collection</span>':'<span class="bp n">&#10007; Manquant</span>');
     var ex='';
     if(m.score||m.cote){
       ex='<div style="display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap">';
@@ -1664,7 +1667,7 @@ function renderClubList(){
   if(!clubFiltered.length){g.innerHTML='<div class="no-res">&#127942; Aucune finale</div>';document.getElementById('cpag').innerHTML='';return;}
   var start=(clubPage-1)*clubPerPage,page=clubFiltered.slice(start,start+clubPerPage);
   var rows=page.map(function(m){
-    var badge=m.programme?'<span style="color:#5de895">&#10003;</span>':'<span style="color:#e06060">&#10007;</span>';
+    var badge=m.sans_programme?'<span style="color:#8c8ca0">&#8709;</span>':(m.programme?'<span style="color:#5de895">&#10003;</span>':'<span style="color:#e06060">&#10007;</span>');
     var fav=m.favori?'<span style="color:#ffd966">&#9733;</span>':'';
     var scan=m.image_couverture?'&#128247;':'';
     return '<tr onclick="openModal('+m.id+')" style="cursor:pointer;border-bottom:1px solid rgba(42,48,64,.4)">'
