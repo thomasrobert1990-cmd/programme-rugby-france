@@ -333,7 +333,7 @@ textarea.fi{resize:vertical;min-height:58px}
         <div><span class="fl2">&#201;quipe domicile</span><input class="fi" type="text" id="i-dom"></div>
         <div><span class="fl2">&#201;quipe ext&#233;rieur</span><input class="fi" type="text" id="i-ext"></div>
         <div class="full"><span class="fl2">Lieu</span><input class="fi" type="text" id="i-lieu"></div>
-        <div><span class="fl2">En collection&#160;?</span><select class="fi" id="i-prog"><option value="1">&#10003; Oui</option><option value="0">&#10007; Non</option></select></div>
+        <div><span class="fl2">Statut</span><select class="fi" id="i-prog"><option value="1">&#10003; Poss&#233;d&#233;</option><option value="0">&#10007; Manquant</option><option value="2">&#8709; Sans programme</option></select></div>
         <div><span class="fl2">Quantit&#233;</span><input class="fi" type="number" id="i-qty" min="0" value="1"></div>
         <div><span class="fl2">&#201;tat</span><select class="fi" id="i-etat"><option value="">&#8212;</option><option>Excellent</option><option>Tr&#232;s bon</option><option>Bon</option><option>Moyen</option><option>Mauvais</option></select></div>
         <div><span class="fl2">Comp&#233;tition</span><select class="fi" id="i-type"><option value="">&#8212;</option><option>Test match</option><option>Tournoi des 5 Nations</option><option>Tournoi des 6 Nations</option><option>Coupe du Monde</option><option>Tourn&#233;e</option><option>Tourn&#233;e d'automne</option><option>Match amical</option><option>Coupe FIRA / Europe</option><option>Coupe Latine</option><option>Jeux Olympiques</option><option>Autre</option></select></div>
@@ -681,7 +681,7 @@ function clearForm(){
 function fillForm(m){
   document.getElementById('i-date').value=m.date||'';document.getElementById('i-score').value=m.score||'';
   document.getElementById('i-dom').value=m.domicile||'';document.getElementById('i-ext').value=m.exterieur||'';
-  document.getElementById('i-lieu').value=m.lieu||'';document.getElementById('i-prog').value=m.programme?'1':'0';
+  document.getElementById('i-lieu').value=m.lieu||'';document.getElementById('i-prog').value=m.sans_programme?'2':(m.programme?'1':'0');
   document.getElementById('i-etat').value=m.etat||'';document.getElementById('i-type').value=m.type_match||'';document.getElementById('i-cote').value=m.cote||'';
   document.getElementById('i-qty').value=m.quantite||0;document.getElementById('i-notes').value=m.notes||'';
   iC=m.image_couverture||'';iF=m.image_feuille||'';setImg('c',iC);setImg('f',iF);
