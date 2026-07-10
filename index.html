@@ -336,7 +336,7 @@ textarea.fi{resize:vertical;min-height:58px}
         <div><span class="fl2">Statut</span><select class="fi" id="i-prog"><option value="1">&#10003; Poss&#233;d&#233;</option><option value="0">&#10007; Manquant</option><option value="2">&#8709; Sans programme</option></select></div>
         <div><span class="fl2">Quantit&#233;</span><input class="fi" type="number" id="i-qty" min="0" value="1"></div>
         <div><span class="fl2">&#201;tat</span><select class="fi" id="i-etat"><option value="">&#8212;</option><option>Excellent</option><option>Tr&#232;s bon</option><option>Bon</option><option>Moyen</option><option>Mauvais</option></select></div>
-        <div><span class="fl2">Comp&#233;tition</span><select class="fi" id="i-type"><option value="">&#8212;</option><option>Test match</option><option>Tournoi des 5 Nations</option><option>Tournoi des 6 Nations</option><option>Coupe du Monde</option><option>Tourn&#233;e</option><option>Tourn&#233;e d'automne</option><option>Match amical</option><option>Coupe FIRA / Europe</option><option>Coupe Latine</option><option>Jeux Olympiques</option><option>Autre</option></select></div>
+        <div><span class="fl2">Comp&#233;tition</span><input class="fi" id="i-type" list="complist" placeholder="Choisir ou taper..." autocomplete="off"><datalist id="complist"></datalist></div>
         <div><span class="fl2">Cote</span><input class="fi" type="text" id="i-cote" placeholder="45 &#8364;"></div>
         <div class="full"><span class="fl2">Notes</span><textarea class="fi" id="i-notes" placeholder="D&#233;dicaces, provenance..."></textarea></div>
       </div>
@@ -478,6 +478,19 @@ function buildTeams(){
   if(sco){
     Object.keys(comps).sort().forEach(function(v){
       var o=document.createElement('option');o.value=v;o.textContent=v;sco.appendChild(o);
+    });
+  }
+  // Also fill the datalist for the modal input (list + free text)
+  var dl=document.getElementById('complist');
+  if(dl){
+    dl.innerHTML='';
+    // Predefined + existing values merged
+    var preset=['Test match','Tournoi des 5 Nations','Tournoi des 6 Nations','Coupe du Monde','Championnat des Nations','Tourn\u00e9e','Tourn\u00e9e d\'automne','Match amical','Coupe FIRA / Europe','Coupe Latine','Jeux Olympiques','Autre'];
+    var allComps={};
+    preset.forEach(function(p){allComps[p]=1;});
+    Object.keys(comps).forEach(function(p){allComps[p]=1;});
+    Object.keys(allComps).sort().forEach(function(v){
+      var o=document.createElement('option');o.value=v;dl.appendChild(o);
     });
   }
   // Club dropdown: only teams from club finals
@@ -675,7 +688,7 @@ function openModal(id){
 }
 function clearForm(){
   ['i-date','i-score','i-dom','i-ext','i-lieu','i-cote','i-notes'].forEach(function(id){document.getElementById(id).value='';});
-  document.getElementById('i-prog').value='1';document.getElementById('i-etat').value='';document.getElementById('i-type').value='';document.getElementById('i-qty').value='1';
+  document.getElementById('i-prog').value='0';document.getElementById('i-etat').value='';document.getElementById('i-type').value='';document.getElementById('i-qty').value='0';
   setImg('c','');setImg('f','');
 }
 function fillForm(m){
