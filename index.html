@@ -273,8 +273,8 @@ textarea.fi{resize:vertical;min-height:58px}
     <div class="toolbar">
       <div class="rc"><strong id="ccnt">&#8212;</strong> r&#233;sultats</div>
       <div class="tr">
-        <button class="btn-o" onclick="exportXLSX('club')">&#11015; Excel</button>
-        <button class="btn-o" onclick="exportPDF('club')">&#11015; PDF</button>
+        <button class="btn-o" onclick="exportXLSX()">&#11015; Excel</button>
+        <button class="btn-o" onclick="exportPDF()">&#11015; PDF</button>
         <button class="btn-b" onclick="openImport('club')">&#11014; Import scans</button>
         <label>Trier&#160;:</label>
         <select id="csrt" onchange="applyClubF()">
@@ -990,14 +990,6 @@ function toggleMarket(){
   if(b){b.style.display=b.style.display==='none'?'block':'none';}
 }
 
-/* EXPORT */
-function exportCSV(){
-  var h=['Date','Match','Domicile','Exterieur','Lieu','Programme','Score','Etat','Cote','Quantite','Notes'];
-  var rows=filtered.map(function(m){return[m.date,m.match,m.domicile,m.exterieur,m.lieu,m.programme?'Oui':'Non',m.score,m.etat,m.cote,m.quantite,m.notes].map(function(v){return'"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');});
-  var blob=new Blob(['\uFEFF'+h.join(',')+String.fromCharCode(10)+rows.join(String.fromCharCode(10))],{type:'text/csv;charset=utf-8;'});
-  var u=URL.createObjectURL(blob);var a=document.createElement('a');a.href=u;a.download='collection_rugby.csv';a.click();URL.revokeObjectURL(u);
-}
-
 function toast(msg){
   var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');
   setTimeout(function(){t.classList.remove('show');},2500);
@@ -1196,59 +1188,102 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeZoom();
 
 
 /* ===== EXPORTS ===== */
-function getExportData(filter) {
+function _isClubView(){var v=document.getElementById('view-club');return !!(v&&v.style.display!=='none');}
+function _dkey(m){var p=(m.date||'').split('/');return p.length===3?p[2]+p[1]+p[0]:String(m.year||'');}
+
+function getExportData(filter, scope, y1, y2) {
+  if(filter==='current') return scope==='club' ? clubFiltered : filtered;
   var data = allData.filter(function(m) {
+    if(scope==='club' ? m.categorie!=='club' : m.categorie==='club') return false;
+    var yr=+m.year||0; if(yr<y1||yr>y2) return false;
     if(filter === 'doublons') return m.quantite > 1;
-    if(filter === 'collection') return m.programme && m.categorie !== 'club';
-    if(filter === 'manquants') return !m.programme && m.categorie !== 'club';
-    if(filter === 'club') return m.categorie === 'club';
-    if(filter === 'club_collection') return m.categorie === 'club' && m.programme;
-    if(filter === 'club_manquants') return m.categorie === 'club' && !m.programme;
+    if(filter === 'collection') return !!m.programme;
+    if(filter === 'manquants') return !m.programme && !m.sans_programme;
     return true;
   });
-  return data;
+  return data.sort(function(a,b){return _dkey(a)<_dkey(b)?-1:_dkey(a)>_dkey(b)?1:0;});
 }
 
-function exportXLSX(filter) {
-  // If no filter specified, show choice dialog
-  if(!filter) {
-    var choice = prompt('Que voulez-vous exporter ?\n1 = Vue actuelle (filtres + nation appliqu\u00e9s)\n2 = Ma collection\n3 = Doublons\n4 = Manquants\n\nTapez 1, 2, 3 ou 4');
-    if(!choice) return;
-    filter = choice==='2'?'collection':choice==='3'?'doublons':choice==='4'?'manquants':'current';
-  }
-  var data = filter==='current' ? filtered : getExportData(filter);
-  var label = filter==='doublons'?'Doublons':filter==='collection'?'Ma Collection':filter==='manquants'?'Manquants':'Collection';
-  
+/* Fenêtre de choix d'export (France et Club) */
+function openExport(format) {
+  var club=_isClubView();
+  var y1=(document.getElementById(club?'cf-y1':'f-y1')||{}).value||'';
+  var y2=(document.getElementById(club?'cf-y2':'f-y2')||{}).value||'';
+  var old=document.getElementById('exp-modal'); if(old) old.remove();
+  var inp='width:70px;padding:6px 8px;background:var(--carte2);border:1px solid var(--bord);border-radius:6px;color:var(--blanc);font-size:14px';
+  var lab='display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gris);margin:14px 0 6px';
+  var opt=function(v,t,chk){return '<label style="display:block;padding:5px 0;cursor:pointer"><input type="radio" name="exp-what" value="'+v+'"'+(chk?' checked':'')+'> '+t+'</label>';};
+  var btn=function(f,t){return '<button onclick="runExport(\''+f+'\')" style="flex:1;padding:9px;border-radius:6px;cursor:pointer;font-weight:700;border:1px solid var(--or);'+(f===format?'background:var(--or);color:#111':'background:none;color:var(--or)')+'">'+t+'</button>';};
+  var h='<div id="exp-modal" onclick="if(event.target===this)this.remove()" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px">'
+    +'<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:20px;width:100%;max-width:360px;color:var(--blanc)">'
+    +'<div style="font-family:\'Bebas Neue\',cursive;font-size:22px;letter-spacing:2px;color:var(--or)">Exporter &mdash; '+(club?'Club':'France')+'</div>'
+    +'<span style="'+lab+'">Contenu</span>'
+    +opt('manquants','&#10060; Manquants',true)+opt('doublons','&#215;2 Doublons')+opt('collection','&#9989; Ma collection')+opt('current','&#128269; Vue actuelle (tous mes filtres)')
+    +'<span style="'+lab+'">P&#233;riode <span style="text-transform:none;letter-spacing:0">(vide = tout)</span></span>'
+    +'<input id="exp-y1" type="text" maxlength="4" placeholder="'+(club?'1892':'1906')+'" value="'+y1+'" style="'+inp+'"> &#8594; '
+    +'<input id="exp-y2" type="text" maxlength="4" placeholder="2026" value="'+y2+'" style="'+inp+'">'
+    +'<div id="exp-note" style="font-size:11px;color:var(--gris);margin-top:4px;display:none">La vue actuelle utilise la p&#233;riode de la barre de filtres.</div>'
+    +'<label style="display:block;margin-top:16px;cursor:pointer;font-size:15px"><input type="checkbox" id="exp-cote" checked> Inclure les cotes</label>'
+    +'<div style="display:flex;gap:8px;margin-top:18px">'+btn('xlsx','Excel')+btn('pdf','PDF')+btn('csv','CSV')+'</div>'
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+  document.querySelectorAll('input[name="exp-what"]').forEach(function(r){r.onchange=function(){
+    var cur=r.value==='current'&&r.checked;
+    document.getElementById('exp-y1').disabled=cur;document.getElementById('exp-y2').disabled=cur;
+    document.getElementById('exp-note').style.display=cur?'block':'none';
+  };});
+}
+
+function runExport(format) {
+  var scope=_isClubView()?'club':'france';
+  var filter=(document.querySelector('input[name="exp-what"]:checked')||{}).value||'manquants';
+  var y1=+document.getElementById('exp-y1').value||1800;
+  var y2=+document.getElementById('exp-y2').value||2100;
+  var withCote=document.getElementById('exp-cote').checked;
+  var data=getExportData(filter,scope,y1,y2);
+  var names={manquants:'Manquants',doublons:'Doublons',collection:'Ma Collection',current:'Selection'};
+  var label=names[filter]+(scope==='club'?' Club':'');
+  var periode=(filter!=='current'&&(document.getElementById('exp-y1').value||document.getElementById('exp-y2').value))?(' '+(document.getElementById('exp-y1').value||'...')+'-'+(document.getElementById('exp-y2').value||'...')):'';
+  var fname='rugby_'+(label+periode).toLowerCase().replace(/[ .]+/g,'_').replace(/_+$/,'');
+  document.getElementById('exp-modal').remove();
+  if(!data.length){toast('Aucun programme &#224; exporter');return;}
+  if(format==='xlsx') _exportXLSX(data,label+periode,fname,withCote,filter);
+  else if(format==='pdf') _exportPDF(data,label+periode,withCote);
+  else _exportCSV(data,fname,withCote);
+}
+
+function exportXLSX(){ openExport('xlsx'); }
+function exportPDF(){ openExport('pdf'); }
+function exportCSV(){ openExport('csv'); }
+
+function _exportXLSX(data,label,fname,withCote,filter) {
   var rows = data.map(function(m) {
-    return {
-      'Date': m.date||'',
-      'Match': m.match||'',
-      'Lieu': m.lieu||'',
-      'Score': m.score||'',
-      'Poss\u00e9d\u00e9': m.programme?'Oui':'Non',
-      'Cote': m.cote||''
-    };
+    var r = {'Date': m.date||'','Match': m.match||'','Lieu': m.lieu||'','Score': m.score||''};
+    if(filter==='doublons') r['Quantité']=m.quantite||0; else r['Possédé']=m.programme?'Oui':'Non';
+    if(withCote) r['Cote']=m.cote||'';
+    return r;
   });
-  
   var ws = XLSX.utils.json_to_sheet(rows);
-  // Column widths
-  ws['!cols'] = [{wch:12},{wch:32},{wch:38},{wch:12},{wch:10},{wch:10}];
+  ws['!cols'] = [{wch:12},{wch:32},{wch:38},{wch:12},{wch:10}].concat(withCote?[{wch:10}]:[]);
   var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, label);
-  XLSX.writeFile(wb, 'rugby_' + label.toLowerCase().replace(/ /g,'_') + '.xlsx');
-  toast('&#11015; Excel export\u00e9 : ' + rows.length + ' lignes');
+  XLSX.utils.book_append_sheet(wb, ws, label.substring(0,31));
+  XLSX.writeFile(wb, fname + '.xlsx');
+  toast('&#11015; Excel exporté : ' + rows.length + ' lignes');
 }
 
-function exportPDF(filter) {
-  if(!filter) {
-    var choice = prompt('Que voulez-vous exporter ?\n1 = Vue actuelle (filtres + nation appliqu\u00e9s)\n2 = Ma collection\n3 = Doublons\n4 = Manquants\n\nTapez 1, 2, 3 ou 4');
-    if(!choice) return;
-    filter = choice==='2'?'collection':choice==='3'?'doublons':choice==='4'?'manquants':'current';
-  }
-  var data = filter==='current' ? filtered : getExportData(filter);
-  var label = filter==='doublons'?'Doublons':filter==='collection'?'Ma Collection':filter==='manquants'?'Manquants':'Collection';
-  
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
+function _exportCSV(data,fname,withCote){
+  var h=['Date','Match','Domicile','Exterieur','Lieu','Programme','Score','Etat'].concat(withCote?['Cote']:[]).concat(['Quantite','Notes']);
+  var rows=data.map(function(m){
+    var v=[m.date,m.match,m.domicile,m.exterieur,m.lieu,m.programme?'Oui':'Non',m.score,m.etat].concat(withCote?[m.cote]:[]).concat([m.quantite,m.notes]);
+    return v.map(function(x){return'"'+String(x||'').replace(/"/g,'""')+'"';}).join(',');
+  });
+  var blob=new Blob(['﻿'+h.join(',')+String.fromCharCode(10)+rows.join(String.fromCharCode(10))],{type:'text/csv;charset=utf-8;'});
+  var u=URL.createObjectURL(blob);var a=document.createElement('a');a.href=u;a.download=fname+'.csv';a.click();URL.revokeObjectURL(u);
+  toast('&#11015; CSV exporté : ' + data.length + ' lignes');
+}
+
+function _exportPDF(data,label,withCote) {
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + label + '</title>';
   html += '<style>';
   html += 'body{font-family:Arial,sans-serif;font-size:11px;margin:20px}';
   html += 'h1{font-size:16px;color:#1a3a1a;border-bottom:2px solid #c9a84c;padding-bottom:6px;margin-bottom:12px}';
@@ -1265,31 +1300,23 @@ function exportPDF(filter) {
   html += '</style></head><body>';
   html += '<div class="no-print" style="margin-bottom:12px"><button onclick="window.print()" style="padding:8px 16px;background:#1a3a1a;color:#f0d080;border:none;border-radius:4px;cursor:pointer;font-size:13px">&#128424; Imprimer / Sauvegarder en PDF</button></div>';
   html += '<h1>&#127945; Ma Collection Rugby &mdash; ' + label + '</h1>';
-  html += '<div class="meta">G\u00e9n\u00e9r\u00e9 le ' + new Date().toLocaleDateString('fr-FR') + ' &bull; ' + data.length + ' programmes</div>';
-  html += '<table><thead><tr><th>Date</th><th>Match</th><th>Lieu</th><th>Score</th><th>Collection</th><th>Qt\u00e9</th><th>Cote</th><th>\u00c9tat</th></tr></thead><tbody>';
-  
+  html += '<div class="meta">Généré le ' + new Date().toLocaleDateString('fr-FR') + ' &bull; ' + data.length + ' programmes</div>';
+  html += '<table><thead><tr><th>Date</th><th>Match</th><th>Lieu</th><th>Score</th><th>Collection</th><th>Qté</th>' + (withCote?'<th>Cote</th>':'') + '<th>État</th></tr></thead><tbody>';
   data.forEach(function(m) {
-    var badge = m.programme ? '<span class="badge-y">\u2713 Oui</span>' : '<span class="badge-n">\u2717 Non</span>';
-    var qty = m.quantite > 1 ? '<span class="qty">\u00d7' + m.quantite + '</span>' : (m.quantite||0);
-    var cote = m.cote ? '<span class="cote">' + m.cote + '</span>' : '';
-    html += '<tr>';
-    html += '<td>' + (m.date||'') + '</td>';
-    html += '<td><b>' + (m.match||'') + '</b></td>';
-    html += '<td style="color:#666">' + (m.lieu||'').substring(0,40) + '</td>';
-    html += '<td><b>' + (m.score||'') + '</b></td>';
-    html += '<td>' + badge + '</td>';
-    html += '<td>' + qty + '</td>';
-    html += '<td>' + cote + '</td>';
-    html += '<td>' + (m.etat||'') + '</td>';
-    html += '</tr>';
+    var badge = m.programme ? '<span class="badge-y">✓ Oui</span>' : '<span class="badge-n">✗ Non</span>';
+    var qty = m.quantite > 1 ? '<span class="qty">×' + m.quantite + '</span>' : (m.quantite||0);
+    html += '<tr><td>' + (m.date||'') + '</td><td><b>' + (m.match||'') + '</b></td>';
+    html += '<td style="color:#666">' + (m.lieu||'').substring(0,40) + '</td><td><b>' + (m.score||'') + '</b></td>';
+    html += '<td>' + badge + '</td><td>' + qty + '</td>';
+    if(withCote) html += '<td>' + (m.cote ? '<span class="cote">' + m.cote + '</span>' : '') + '</td>';
+    html += '<td>' + (m.etat||'') + '</td></tr>';
   });
-  
   html += '</tbody></table></body></html>';
-  
   var w = window.open('', '_blank');
+  if(!w){toast('Autorise les fenêtres pop-up pour le PDF');return;}
   w.document.write(html);
   w.document.close();
-  toast('&#11015; PDF pr\u00eat \u2014 clique Imprimer dans la nouvelle fen\u00eatre');
+  toast('&#11015; PDF prêt — clique Imprimer dans la nouvelle fenêtre');
 }
 
 
