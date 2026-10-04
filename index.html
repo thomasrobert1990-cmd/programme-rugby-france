@@ -1244,7 +1244,7 @@ function runExport(format) {
   var fname='rugby_'+(label+periode).toLowerCase().replace(/[ .]+/g,'_').replace(/_+$/,'');
   document.getElementById('exp-modal').remove();
   if(!data.length){toast('Aucun programme &#224; exporter');return;}
-  if(format==='xlsx') _exportXLSX(data,label+periode,fname,withCote,filter);
+  if(format==='xlsx') _exportXLSX(data,label+periode,fname,withCote,filter,scope);
   else if(format==='pdf') _exportPDF(data,label+periode,withCote);
   else _exportCSV(data,fname,withCote);
 }
@@ -1253,25 +1253,40 @@ function exportXLSX(){ openExport('xlsx'); }
 function exportPDF(){ openExport('pdf'); }
 function exportCSV(){ openExport('csv'); }
 
-function _exportXLSX(data,label,fname,withCote,filter) {
+/* Adversaire de la France (pour trier par pays) */
+function _adversaire(m){
+  var d=m.domicile||'',x=m.exterieur||'';
+  if(!d&&!x){var p=(m.match||'').split(/\s+[\u2013\u2014-]\s+/);d=p[0]||'';x=p[1]||'';}
+  var isF=function(t){return nm(t).indexOf('france')>=0;};
+  if(isF(d)&&!isF(x))return x.trim();
+  if(isF(x)&&!isF(d))return d.trim();
+  return (d+(x?' / '+x:'')).trim();
+}
+function _dateCell(s){var p=(s||'').split('/');return p.length===3?new Date(+p[2],+p[1]-1,+p[0],12):(s||'');}
+
+function _exportXLSX(data,label,fname,withCote,filter,scope) {
   var rows = data.map(function(m) {
-    var r = {'Date': m.date||'','Match': m.match||'','Lieu': m.lieu||'','Score': m.score||''};
-    if(filter==='doublons') r['Quantité']=m.quantite||0; else r['Possédé']=m.programme?'Oui':(m.sans_programme?'Non (sans programme ?)':'Non');
+    var r = {'Date': _dateCell(m.date)};
+    if(scope==='club'){r['Domicile']=m.domicile||'';r['Ext\u00e9rieur']=m.exterieur||'';}
+    else r['Adversaire']=_adversaire(m);
+    r['Match']=m.match||'';r['Lieu']=m.lieu||'';r['Score']=m.score||'';
+    if(filter==='doublons') r['Quantit\u00e9']=m.quantite||0; else r['Poss\u00e9d\u00e9']=m.programme?'Oui':(m.sans_programme?'Non (sans programme ?)':'Non');
     if(withCote) r['Cote']=m.cote||'';
     return r;
   });
-  var ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{wch:12},{wch:32},{wch:38},{wch:12},{wch:10}].concat(withCote?[{wch:10}]:[]);
+  var ws = XLSX.utils.json_to_sheet(rows, {cellDates:true, dateNF:'dd/mm/yyyy'});
+  ws['!cols'] = [{wch:12}].concat(scope==='club'?[{wch:22},{wch:22}]:[{wch:20}]).concat([{wch:32},{wch:38},{wch:12},{wch:12}]).concat(withCote?[{wch:10}]:[]);
+  ws['!autofilter'] = {ref: ws['!ref']};
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, label.substring(0,31));
   XLSX.writeFile(wb, fname + '.xlsx');
-  toast('&#11015; Excel exporté : ' + rows.length + ' lignes');
+  toast('&#11015; Excel export\u00e9 : ' + rows.length + ' lignes');
 }
 
 function _exportCSV(data,fname,withCote){
-  var h=['Date','Match','Domicile','Exterieur','Lieu','Programme','Score','Etat'].concat(withCote?['Cote']:[]).concat(['Quantite','Notes']);
+  var h=['Date','Adversaire','Match','Domicile','Exterieur','Lieu','Programme','Score','Etat'].concat(withCote?['Cote']:[]).concat(['Quantite','Notes']);
   var rows=data.map(function(m){
-    var v=[m.date,m.match,m.domicile,m.exterieur,m.lieu,m.programme?'Oui':(m.sans_programme?'Non (sans programme ?)':'Non'),m.score,m.etat].concat(withCote?[m.cote]:[]).concat([m.quantite,m.notes]);
+    var v=[m.date,_adversaire(m),m.match,m.domicile,m.exterieur,m.lieu,m.programme?'Oui':(m.sans_programme?'Non (sans programme ?)':'Non'),m.score,m.etat].concat(withCote?[m.cote]:[]).concat([m.quantite,m.notes]);
     return v.map(function(x){return'"'+String(x||'').replace(/"/g,'""')+'"';}).join(',');
   });
   var blob=new Blob(['﻿'+h.join(',')+String.fromCharCode(10)+rows.join(String.fromCharCode(10))],{type:'text/csv;charset=utf-8;'});
