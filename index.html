@@ -227,6 +227,7 @@ textarea.fi{resize:vertical;min-height:58px}
         <button class="btn-o" onclick="exportCSV()">&#11015; CSV</button>
         <button class="btn-o" onclick="exportXLSX()">&#11015; Excel</button>
         <button class="btn-o" onclick="exportPDF()">&#11015; PDF</button>
+        <button class="btn-o" onclick="openVendor()" title="Retrouver tes manquants dans la liste d'un vendeur">&#128270; Liste vendeur</button>
         <button class="btn-o" onclick="shareLink()" title="Copier le lien de la page publique (recherch&#233;s + doublons, sans cotes)">&#128279; Partager</button>
         <button class="btn-o bk-btn" onclick="backupAll()" title="T&#233;l&#233;charger une sauvegarde compl&#232;te">&#128190; Sauvegarde</button>
         <button class="btn-b" onclick="openImport()">&#11014; Import scans</button>
@@ -278,6 +279,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <div class="tr">
         <button class="btn-o" onclick="exportXLSX()">&#11015; Excel</button>
         <button class="btn-o" onclick="exportPDF()">&#11015; PDF</button>
+        <button class="btn-o" onclick="openVendor()" title="Retrouver tes manquants dans la liste d'un vendeur">&#128270; Liste vendeur</button>
         <button class="btn-o" onclick="shareLink()" title="Copier le lien de la page publique (recherch&#233;s + doublons, sans cotes)">&#128279; Partager</button>
         <button class="btn-o bk-btn" onclick="backupAll()" title="T&#233;l&#233;charger une sauvegarde compl&#232;te">&#128190; Sauvegarde</button>
         <button class="btn-b" onclick="openImport('club')">&#11014; Import scans</button>
@@ -1911,6 +1913,176 @@ if('serviceWorker' in navigator){
   });
 }
 
+
+/* ===== RAPPROCHEMENT LISTE VENDEUR ===== */
+// Dépose l'Excel/CSV d'un vendeur (ou colle sa liste) : l'appli retrouve les matchs correspondants
+// et met en avant ceux qui te manquent, avec ta cote et son prix.
+var VD_OPP={ // noms anglais / variantes -> nom utilisé dans la base
+  'wales':'galles','pays de galles':'galles','scotland':'ecosse','england':'angleterre','ireland':'irlande',
+  'new zealand':'nouvelle zelande','all blacks':'nouvelle zelande','nz':'nouvelle zelande','n z':'nouvelle zelande',
+  'south africa':'afrique du sud','springboks':'afrique du sud','sa':'afrique du sud',
+  'australia':'australie','wallabies':'australie','italy':'italie','argentina':'argentine','pumas':'argentine',
+  'romania':'roumanie','fiji':'fidji','japan':'japon','usa':'etats unis','united states':'etats unis','america':'etats unis',
+  'georgia':'georgie','namibia':'namibie','germany':'allemagne','ivory coast':'cote d ivoire',
+  'british lions':'lions britanniques','lions':'lions britanniques','british irish lions':'lions britanniques',
+  'maori':'n z maori','nz maori':'n z maori','new zealand maori':'n z maori','pacific islanders':'pacific islanders',
+  'western samoa':'samoa','tonga':'tonga','samoa':'samoa','canada':'canada','uruguay':'uruguay','barbarians':'barbarians'
+};
+function vdKey(s){return nm(String(s||'')).replace(/[^a-z0-9]+/g,' ').trim();}
+function vdAdvKey(m){return vdKey(_adversaire(m));}
+function vdYear(m){return +m.year||+(String(m.date||'').slice(-4))||0;}
+function vdDateKey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function vdMyDateKey(m){var p=String(m.date||'').split('/');return p.length===3?(+p[2])+'-'+(+p[1])+'-'+(+p[0]):'';}
+
+var VD_MONTHS={jan:1,janv:1,janvier:1,january:1,feb:2,fev:2,fevr:2,fevrier:2,february:2,mar:3,mars:3,march:3,apr:4,avr:4,avril:4,april:4,may:5,mai:5,jun:6,juin:6,june:6,jul:7,juil:7,juillet:7,july:7,aug:8,aout:8,august:8,sep:9,sept:9,septembre:9,september:9,oct:10,octobre:10,october:10,nov:11,novembre:11,november:11,dec:12,decembre:12,december:12};
+function vdParseDates(txt){
+  var out=[],t=nm(txt),m,re;
+  re=/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/g;
+  while((m=re.exec(t))){var y=+m[3];if(y<100)y+=(y>30?1900:2000);var dd=+m[1],mm=+m[2];if(mm>12&&dd<=12){var x=dd;dd=mm;mm=x;}if(mm<=12&&dd<=31)out.push(new Date(y,mm-1,dd,12));}
+  re=/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g;
+  while((m=re.exec(t)))out.push(new Date(+m[1],+m[2]-1,+m[3],12));
+  re=/\b(\d{1,2})(?:st|nd|rd|th|er)?\s+([a-z]{3,9})\.?\s+(\d{4})\b/g;
+  while((m=re.exec(t))){var mo=VD_MONTHS[m[2]];if(mo)out.push(new Date(+m[3],mo-1,+m[1],12));}
+  return out;
+}
+function vdParseOpps(txt){
+  var k=' '+vdKey(txt)+' ',found={};
+  Object.keys(VD_OPP).forEach(function(a){if(k.indexOf(' '+a+' ')>=0)found[VD_OPP[a]]=1;});
+  (window._vdKnown||[]).forEach(function(a){if(a&&a!=='france'&&k.indexOf(' '+a+' ')>=0)found[a]=1;});
+  return Object.keys(found);
+}
+
+function vdRowsFromSheet(name,ws){
+  var aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+  var priceCols={},rows=[];
+  aoa.slice(0,6).forEach(function(r){r.forEach(function(v,i){if(typeof v==='string'&&v.length<25&&!/\d/.test(v)&&/price|prix|tarif|cost|£|€|gbp|eur|asking/i.test(v))priceCols[i]=1;});});
+  aoa.forEach(function(r,ri){
+    var dates=[],years=[],texts=[],price='';
+    r.forEach(function(v,i){
+      // +12 h : SheetJS décale parfois les dates de quelques secondes vers la veille
+      if(v instanceof Date){var z=new Date(v.getTime()+432e5);dates.push(new Date(z.getFullYear(),z.getMonth(),z.getDate(),12));return;}
+      if(typeof v==='number'){
+        if(priceCols[i]){price=price||String(v);return;}
+        if(v>=1880&&v<=2035&&Math.floor(v)===v){years.push(v);return;}
+        return;
+      }
+      var s=String(v).trim();if(!s)return;
+      if(priceCols[i]){if(!price)price=s;return;}
+      var pm=s.match(/[£€$]\s?\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s?[£€$]/);if(pm&&!price)price=pm[0];
+      texts.push(s);
+    });
+    var txt=texts.join(' ');
+    dates=dates.concat(vdParseDates(txt));
+    (txt.match(/\b(18[89]\d|19\d\d|20[0-3]\d)\b/g)||[]).forEach(function(y){years.push(+y);});
+    // Piège connu (fichiers Rugby Spares) : jour/mois justes mais année fausse ; la vraie année est dans une colonne voisine
+    if(dates.length&&years.length&&years.indexOf(dates[0].getFullYear())<0){var yy=years[0];dates=dates.map(function(d){return new Date(yy,d.getMonth(),d.getDate(),12);});}
+    if(!dates.length&&!years.length)return;
+    var opps=vdParseOpps(txt+' '+name);
+    rows.push({sheet:name,line:ri+1,raw:(r.filter(function(v){return v!==''&&v!=null;}).map(function(v){return v instanceof Date?v.toLocaleDateString('fr-FR'):v;}).join(' · ')).slice(0,140),dates:dates,years:years,opps:opps,price:price});
+  });
+  return rows;
+}
+
+function vdMatch(rows){
+  var byDate={};allData.forEach(function(m){var k=vdMyDateKey(m);if(k)(byDate[k]=byDate[k]||[]).push(m);});
+  var res=[],seen={},unrec=0;
+  rows.forEach(function(r){
+    var hits=[],level='';
+    r.dates.forEach(function(d){(byDate[vdDateKey(d)]||[]).forEach(function(m){hits.push(m);});});
+    if(hits.length){
+      if(r.opps.length){var ok=hits.filter(function(m){return m.categorie==='club'||r.opps.indexOf(vdAdvKey(m))>=0;});
+        if(ok.length){hits=ok;level='sur';}else level='verif';}
+      else level=hits.length>1?'verif':'sur';
+    }else{
+      var y=r.dates.length?r.dates[0].getFullYear():r.years[0];
+      if(y&&r.opps.length){
+        hits=allData.filter(function(m){return m.categorie!=='club'&&vdYear(m)===y&&r.opps.indexOf(vdAdvKey(m))>=0;});
+        level=hits.length===1?'probable':'verif';
+      }
+    }
+    if(!hits.length){unrec++;return;}
+    hits.forEach(function(m){
+      var k=m.id+'|'+r.sheet+'|'+r.line;if(seen[k])return;seen[k]=1;
+      res.push({m:m,level:level,row:r,multi:hits.length>1});
+    });
+  });
+  return {res:res,unrec:unrec,total:rows.length};
+}
+
+function openVendor(){
+  var old=document.getElementById('vd');if(old)old.remove();
+  var h='<div id="vd" class="imp" style="display:block;z-index:95"><div class="imp-wrap" style="max-width:960px">'
+   +'<div class="imp-hdr"><div class="imp-title">&#128270; Rapprocher une liste vendeur</div><button class="btn-o" onclick="document.getElementById(\'vd\').remove()">&#10005; Fermer</button></div>'
+   +'<div class="imp-box" id="vd-in"><h3>1. La liste du vendeur</h3>'
+   +'<div class="imp-dz" id="vd-dz">&#128196; D&#233;pose ici son fichier Excel ou CSV (tous les onglets sont lus)<br><span style="font-size:12px;color:var(--gris)">ou clique pour le choisir</span><input type="file" accept=".xlsx,.xls,.xlsm,.csv,.txt,.ods" onchange="vdFile(this.files[0])"></div>'
+   +'<div style="margin:12px 0 6px;color:var(--gris);font-size:13px">&hellip;ou colle sa liste (une ligne par programme : date et/ou ann&#233;e + adversaire) :</div>'
+   +'<textarea id="vd-txt" rows="5" style="width:100%;background:var(--carte2);border:1px solid var(--bord);border-radius:6px;color:var(--blanc);padding:8px;font-family:inherit;font-size:14px" placeholder="16/03/1991 France v England &#163;12&#10;Wales v France 1975 - 8&#8364;"></textarea>'
+   +'<button class="btn-o" style="margin-top:8px" onclick="vdText()">Analyser le texte coll&#233;</button></div>'
+   +'<div id="vd-out"></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+  var dz=document.getElementById('vd-dz');
+  dz.ondragover=function(e){e.preventDefault();dz.style.borderColor='var(--or)';};
+  dz.ondragleave=function(){dz.style.borderColor='';};
+  dz.ondrop=function(e){e.preventDefault();dz.style.borderColor='';if(e.dataTransfer.files[0])vdFile(e.dataTransfer.files[0]);};
+}
+function vdPrep(){var s={};allData.forEach(function(m){if(m.categorie!=='club'){var k=vdAdvKey(m);if(k)s[k]=1;}});window._vdKnown=Object.keys(s);}
+function vdFile(f){
+  if(!f)return;vdPrep();
+  var rd=new FileReader();
+  rd.onload=function(e){
+    try{
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+      var rows=[];wb.SheetNames.forEach(function(n){rows=rows.concat(vdRowsFromSheet(n,wb.Sheets[n]));});
+      vdShow(vdMatch(rows),f.name);
+    }catch(err){document.getElementById('vd-out').innerHTML='<div class="imp-box" style="color:var(--rouge2)">Fichier illisible : '+err.message+'</div>';}
+  };
+  rd.readAsArrayBuffer(f);
+}
+function vdText(){
+  vdPrep();
+  var lines=document.getElementById('vd-txt').value.split(/\n/).filter(function(l){return l.trim();});
+  var ws=XLSX.utils.aoa_to_sheet(lines.map(function(l){return [l];}));
+  vdShow(vdMatch(vdRowsFromSheet('Texte collé',ws)),'texte collé');
+}
+var _vdLast=null;
+function vdShow(r,src){
+  var miss=r.res.filter(function(x){return !x.m.programme;}),own=r.res.filter(function(x){return x.m.programme;});
+  var lv={sur:0,probable:1,verif:2};
+  miss.sort(function(a,b){return lv[a.level]-lv[b.level]||(_dkey(a.m)<_dkey(b.m)?-1:1);});
+  _vdLast={miss:miss,own:own,src:src};
+  var nb=function(l){return miss.filter(function(x){return x.level===l;}).length;};
+  var badge={sur:['#5de895','Sûr'],probable:['#90b0f0','Probable'],verif:['#e8c84c','À vérifier']};
+  var h='<div class="imp-box"><h3>2. R&#233;sultat &mdash; '+esc0(src)+'</h3>'
+   +'<div class="imp-sg"><div class="imp-sc"><div class="imp-sv" style="color:var(--or)">'+miss.length+'</div><div class="imp-sl">Manquants trouv&#233;s</div></div>'
+   +'<div class="imp-sc"><div class="imp-sv" style="color:#5de895">'+nb('sur')+'</div><div class="imp-sl">S&#251;rs</div></div>'
+   +'<div class="imp-sc"><div class="imp-sv" style="color:#e8c84c">'+(nb('probable')+nb('verif'))+'</div><div class="imp-sl">Probables / &#224; v&#233;rifier</div></div>'
+   +'<div class="imp-sc"><div class="imp-sv">'+own.length+'</div><div class="imp-sl">D&#233;j&#224; poss&#233;d&#233;s</div></div></div>'
+   +'<div style="font-size:12px;color:var(--gris);margin-bottom:10px">'+r.total+' lignes avec une date ou une ann&#233;e lues, '+r.unrec+' sans correspondance dans ta base. Clique une ligne pour ouvrir la fiche.</div>'
+   +(miss.length?'<button class="btn-o" style="margin-bottom:10px" onclick="vdExport()">&#11015; Excel de ces manquants</button>':'')
+   +'<div class="imp-tbl" style="max-height:none"><table><thead><tr><th>Confiance</th><th>Date</th><th>Match (ma base)</th><th>Ligne du vendeur</th><th>Prix vendeur</th><th>Ma cote</th></tr></thead><tbody>';
+  if(!miss.length)h+='<tr><td colspan="6" style="padding:16px;text-align:center;color:var(--gris)">Aucun de tes manquants dans cette liste.</td></tr>';
+  miss.forEach(function(x){
+    var b=badge[x.level];
+    h+='<tr style="cursor:pointer" onclick="openModal('+x.m.id+')"><td><span style="color:'+b[0]+';font-weight:700">'+b[1]+'</span>'+(x.multi?'<div style="font-size:10px;color:var(--gris)">plusieurs matchs possibles</div>':'')+'</td>'
+     +'<td style="white-space:nowrap">'+esc0(x.m.date)+'</td><td><b>'+esc0(x.m.match)+'</b>'+(x.m.sans_programme?' <span style="color:var(--gris);font-size:11px">(sans prog. ?)</span>':'')+'</td>'
+     +'<td style="color:var(--gris);font-size:11px">'+esc0(x.row.sheet)+' l.'+x.row.line+' &mdash; '+esc0(x.row.raw)+'</td>'
+     +'<td style="white-space:nowrap">'+esc0(x.row.price)+'</td><td style="color:var(--or);white-space:nowrap">'+esc0(x.m.cote||'')+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  document.getElementById('vd-out').innerHTML=h;
+  document.getElementById('vd-out').scrollIntoView({behavior:'smooth'});
+}
+function esc0(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function vdExport(){
+  if(!_vdLast)return;
+  var L={sur:'Sûr',probable:'Probable',verif:'À vérifier'};
+  var rows=_vdLast.miss.map(function(x){return {'Confiance':L[x.level],'Date':_dateCell(x.m.date),'Adversaire':x.m.categorie==='club'?'':_adversaire(x.m),'Match':x.m.match||'','Lieu':x.m.lieu||'','Onglet vendeur':x.row.sheet,'Ligne':x.row.line,'Texte vendeur':x.row.raw,'Prix vendeur':x.row.price,'Ma cote':x.m.cote||''};});
+  var ws=XLSX.utils.json_to_sheet(rows,{cellDates:true,dateNF:'dd/mm/yyyy'});
+  ws['!cols']=[{wch:11},{wch:12},{wch:18},{wch:30},{wch:30},{wch:16},{wch:6},{wch:50},{wch:12},{wch:10}];
+  ws['!autofilter']={ref:ws['!ref']};
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Manquants chez le vendeur');
+  XLSX.writeFile(wb,'rapprochement_'+_vdLast.src.replace(/\.[a-z]+$/i,'').replace(/[^a-z0-9]+/gi,'_')+'.xlsx');
+}
 
 /* ===== LIEN DE PARTAGE ===== */
 function shareLink(){
