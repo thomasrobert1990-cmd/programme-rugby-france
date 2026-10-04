@@ -67,6 +67,7 @@ header{background:linear-gradient(135deg,#0a0d14,#001a4a,#1a000a);border-bottom:
 .btn:hover{background:var(--vert2)}
 .btn-o{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.35);color:var(--or);padding:7px 11px;border-radius:5px;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif}
 .bk-btn.due{border-color:var(--rouge);color:var(--rouge2);animation:bkp 2s infinite}@keyframes bkp{50%{opacity:.55}}
+.qc-n{display:none;background:var(--rouge);color:#fff;border-radius:9px;padding:0 6px;font-size:11px;font-weight:700;margin-left:3px;line-height:16px}
 .btn-b{background:rgba(144,176,240,.1);border:1px solid rgba(144,176,240,.35);color:#90b0f0;padding:7px 11px;border-radius:5px;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
 .card{background:var(--carte);border:1px solid var(--bord);border-radius:9px;overflow:hidden;cursor:pointer;transition:all .2s}
@@ -227,6 +228,7 @@ textarea.fi{resize:vertical;min-height:58px}
         <button class="btn-o" onclick="exportCSV()">&#11015; CSV</button>
         <button class="btn-o" onclick="exportXLSX()">&#11015; Excel</button>
         <button class="btn-o" onclick="exportPDF()">&#11015; PDF</button>
+        <button class="btn-o" onclick="openQC()" title="Anomalies et incoh&#233;rences dans la base">&#129658; Contr&#244;le <span class="qc-n"></span></button>
         <button class="btn-o" onclick="openVendor()" title="Retrouver tes manquants dans la liste d'un vendeur">&#128270; Liste vendeur</button>
         <button class="btn-o" onclick="shareLink()" title="Copier le lien de la page publique (recherch&#233;s + doublons, sans cotes)">&#128279; Partager</button>
         <button class="btn-o bk-btn" onclick="backupAll()" title="T&#233;l&#233;charger une sauvegarde compl&#232;te">&#128190; Sauvegarde</button>
@@ -279,6 +281,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <div class="tr">
         <button class="btn-o" onclick="exportXLSX()">&#11015; Excel</button>
         <button class="btn-o" onclick="exportPDF()">&#11015; PDF</button>
+        <button class="btn-o" onclick="openQC()" title="Anomalies et incoh&#233;rences dans la base">&#129658; Contr&#244;le <span class="qc-n"></span></button>
         <button class="btn-o" onclick="openVendor()" title="Retrouver tes manquants dans la liste d'un vendeur">&#128270; Liste vendeur</button>
         <button class="btn-o" onclick="shareLink()" title="Copier le lien de la page publique (recherch&#233;s + doublons, sans cotes)">&#128279; Partager</button>
         <button class="btn-o bk-btn" onclick="backupAll()" title="T&#233;l&#233;charger une sauvegarde compl&#232;te">&#128190; Sauvegarde</button>
@@ -461,6 +464,7 @@ async function loadAll(){
   }
   allData=r.data||[];
   buildTeams();updateStats();applyF();
+  setTimeout(function(){if(typeof qcBadge==='function')qcBadge();},300);
 }
 
 function buildTeams(){
@@ -2134,6 +2138,119 @@ function vdExport(){
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Manquants chez le vendeur');
   XLSX.writeFile(wb,'rapprochement_'+_vdLast.src.replace(/\.[a-z]+$/i,'').replace(/[^a-z0-9]+/gi,'_')+'.xlsx');
 }
+
+/* ===== CONTROLE QUALITE ===== */
+// Liste les anomalies de la base ; les corrections sûres se font en un clic, le reste ouvre la fiche.
+var QC_TYPOS=[ // [faute, correction] appliquées aux lieux et noms d'équipes
+  ['Lilles','Lille'],['Palmerston Noth','Palmerston North'],['Blenhein','Blenheim'],['Camberra','Canberra'],
+  ['Lansdown Park','Lansdowne Park'],['Multirciale','Multiraciale'],['Traansval','Transvaal'],['Grinqualand','Griqualand'],
+  ['New Zeland','New Zealand'],['Millenium Stadium','Millennium Stadium']
+];
+function qcOk(){try{return JSON.parse(localStorage.getItem('rugby_qc_ok')||'{}');}catch(e){return {};}}
+function qcSetOk(key){var o=qcOk();o[key]=1;try{localStorage.setItem('rugby_qc_ok',JSON.stringify(o));}catch(e){}openQC();}
+function qcKey(s){return nm(String(s||'')).replace(/[^a-z0-9]+/g,' ').trim();}
+function qcPast(m){var p=String(m.date||'').split('/');if(p.length!==3)return true;return new Date(+p[2],+p[1]-1,+p[0])<new Date();}
+
+function qcRun(){
+  var G=[],ok=qcOk();
+  var add=function(id,title,help,items,fix){items=items.filter(function(x){return !ok[id+':'+x.m.id];});if(items.length)G.push({id:id,title:title,help:help,items:items,fix:fix});};
+  // 1. Même équipe écrite de plusieurs façons
+  var names={};allData.forEach(function(m){[m.domicile,m.exterieur].forEach(function(t){t=(t||'').trim();if(!t)return;var k=qcKey(t)+'|'+(m.categorie==='club'?'c':'f');(names[k]=names[k]||{});names[k][t]=(names[k][t]||0)+1;});});
+  var canon={};Object.keys(names).forEach(function(k){var v=names[k],l=Object.keys(v);if(l.length>1){var best=l.sort(function(a,b){return v[b]-v[a];})[0];l.forEach(function(x){if(x!==best)canon[x+'|'+k.split('|')[1]]=best;});}});
+  add('nom','Équipe écrite de plusieurs façons','Le nom le plus utilisé dans ta base est appliqué.',
+    allData.filter(function(m){var c=m.categorie==='club'?'c':'f';return canon[(m.domicile||'').trim()+'|'+c]||canon[(m.exterieur||'').trim()+'|'+c];}).map(function(m){
+      var c=m.categorie==='club'?'c':'f',ch={};
+      ['domicile','exterieur'].forEach(function(f){var t=(m[f]||'').trim(),n=canon[t+'|'+c];if(n){ch[f]=n;ch.match=(ch.match||m.match||'').split(t).join(n);}});
+      return {m:m,txt:Object.keys(ch).filter(function(f){return f!=='match';}).map(function(f){return '« '+m[f]+' » → « '+ch[f]+' »';}).join(', '),ch:ch};
+    }),true);
+  // 2. Fautes de frappe connues
+  add('typo','Faute de frappe probable','Correction proposée dans le lieu ou le nom des équipes.',
+    allData.map(function(m){var ch={},txt=[];['lieu','match','domicile','exterieur'].forEach(function(f){var v=m[f]||'',n=v;QC_TYPOS.forEach(function(t){n=n.split(t[0]).join(t[1]);});if(n!==v){ch[f]=n;if(f==='lieu'||!txt.length)txt.push('« '+v+' » → « '+n+' »');}});return Object.keys(ch).length?{m:m,txt:txt.join(', '),ch:ch}:null;}).filter(Boolean),true);
+  // 3. Incohérences statut / quantité
+  add('incoh','Statut et quantité incohérents','Ex. : marqué manquant mais quantité 1. Ouvre la fiche pour trancher.',
+    allData.filter(function(m){var q=+m.quantite||0;return (!m.programme&&q>0)||(m.programme&&q===0)||(m.sans_programme&&m.programme);}).map(function(m){var q=+m.quantite||0;
+      return {m:m,txt:m.sans_programme&&m.programme?'Possédé ET « sans programme »':(!m.programme?'Manquant mais quantité '+q:'Possédé mais quantité 0')};}),false);
+  // 4. Doublons de saisie
+  var seen={};allData.forEach(function(m){var k=m.date+'|'+qcKey(m.domicile)+'|'+qcKey(m.exterieur);(seen[k]=seen[k]||[]).push(m);});
+  add('dbl','Même match saisi deux fois','Même date et mêmes équipes : une des deux fiches est sans doute en trop.',
+    [].concat.apply([],Object.keys(seen).filter(function(k){return seen[k].length>1;}).map(function(k){return seen[k].map(function(m){return {m:m,txt:seen[k].length+' fiches identiques (n° '+seen[k].map(function(x){return x.id;}).join(', ')+')'};});})),false);
+  // 5. Date invalide
+  add('date','Date invalide ou année incohérente','Format attendu : JJ/MM/AAAA.',
+    allData.filter(function(m){var p=String(m.date||'').split('/');return p.length!==3||p[2].length!==4||+p[1]<1||+p[1]>12||+p[0]<1||+p[0]>31||(m.year&&String(m.year)!==p[2]);}).map(function(m){return {m:m,txt:'Date « '+(m.date||'')+' », année « '+(m.year||'')+' »'};}),false);
+  // 6. Quantités élevées
+  add('qte','Quantité de 3 ou plus','À confirmer : vrais exemplaires ou erreur de saisie (comme Italie – France 1991) ?',
+    allData.filter(function(m){return (+m.quantite||0)>=3;}).map(function(m){return {m:m,txt:'Quantité '+m.quantite};}),false);
+  // 7. Scan présent mais marqué manquant
+  add('scan','Scan présent mais marqué manquant','Tu as une photo de couverture : programme possédé, ou simple image de référence ?',
+    allData.filter(function(m){return !m.programme&&(m.image_couverture||'').trim();}).map(function(m){return {m:m,txt:'Couverture scannée, statut Manquant'};}),false);
+  // 8. Possédé sans scan
+  add('noscan','Possédé sans scan de couverture','À scanner pour compléter la collection.',
+    allData.filter(function(m){return m.programme&&!(m.image_couverture||'').trim();}).map(function(m){return {m:m,txt:'Pas de couverture'};}),false);
+  // 9. Champs vides
+  add('vide','Informations manquantes','Score (matchs déjà joués), lieu ou équipe non renseignés.',
+    allData.map(function(m){var t=[];if(!(m.lieu||'').trim())t.push('lieu');if(!(m.domicile||'').trim()||!(m.exterieur||'').trim())t.push('équipe');if(!(m.score||'').trim()&&qcPast(m))t.push('score');return t.length?{m:m,txt:'Sans '+t.join(', ')}:null;}).filter(Boolean),false);
+  return G;
+}
+
+function qcBadge(){
+  var n=0;try{qcRun().forEach(function(g){n+=g.items.length;});}catch(e){}
+  document.querySelectorAll('.qc-n').forEach(function(b){b.textContent=n?n:'';b.style.display=n?'inline-block':'none';});
+}
+
+function openQC(){
+  var G=qcRun(),open=window._qcOpen||{};
+  var old=document.getElementById('qc');var st=old?old.scrollTop:0;if(old)old.remove();
+  var total=G.reduce(function(s,g){return s+g.items.length;},0);
+  var h='<div id="qc" class="imp" style="display:block;z-index:95"><div class="imp-wrap" style="max-width:900px">'
+   +'<div class="imp-hdr"><div class="imp-title">&#129658; Contr&#244;le qualit&#233; &mdash; '+total+' point'+(total>1?'s':'')+' &#224; voir</div><button class="btn-o" onclick="document.getElementById(\'qc\').remove();qcBadge()">&#10005; Fermer</button></div>';
+  if(!total)h+='<div class="imp-box" style="text-align:center;color:#5de895;font-size:16px">&#10003; Aucune anomalie d&#233;tect&#233;e.</div>';
+  G.forEach(function(g){
+    var isOpen=open[g.id]!==false&&(open[g.id]||g.items.length<=12);
+    h+='<div class="imp-box"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer" onclick="qcToggle(\''+g.id+'\','+(!isOpen)+')">'
+      +'<h3 style="margin:0">'+(isOpen?'&#9662;':'&#9656;')+' '+g.title+' <span style="color:var(--blanc);font-family:\'Source Sans 3\',sans-serif;font-size:14px">('+g.items.length+')</span></h3>'
+      +(g.fix?'<button class="btn-o" onclick="event.stopPropagation();qcFixAll(\''+g.id+'\')">&#10003; Tout corriger</button>':'')+'</div>'
+      +'<div style="font-size:12px;color:var(--gris);margin:4px 0 '+(isOpen?'10px':'0')+'">'+g.help+'</div>';
+    if(isOpen){
+      h+='<div class="imp-tbl" style="max-height:none"><table><tbody>';
+      g.items.forEach(function(x){
+        var m=x.m;
+        h+='<tr style="border-top:1px solid rgba(42,48,64,.5)"><td style="padding:6px 8px;white-space:nowrap;color:var(--gris)">'+esc0(m.date)+'</td>'
+          +'<td style="padding:6px 8px;cursor:pointer" onclick="openModal('+m.id+')"><b>'+esc0(m.match)+'</b>'+(m.categorie==='club'?' <span style="font-size:10px;color:var(--gris)">CLUB</span>':'')+'<div style="font-size:12px;color:var(--gris)">'+esc0(x.txt)+'</div></td>'
+          +'<td style="padding:6px 8px;text-align:right;white-space:nowrap">'
+          +(x.ch?'<button class="btn-o" style="padding:4px 8px;font-size:12px" onclick="qcFix(\''+g.id+'\','+m.id+')">Corriger</button> ':'')
+          +'<button class="btn-o" style="padding:4px 8px;font-size:12px" onclick="openModal('+m.id+')">Fiche</button> '
+          +'<button class="btn-o" style="padding:4px 8px;font-size:12px;color:var(--gris);border-color:var(--bord)" title="Ne plus signaler ce point sur cet appareil" onclick="qcSetOk(\''+g.id+':'+m.id+'\')">C\'est bon</button></td></tr>';
+      });
+      h+='</tbody></table></div>';
+    }
+    h+='</div>';
+  });
+  h+='<div style="font-size:12px;color:var(--gris);text-align:center;margin-top:6px">« C\'est bon » masque un point sur cet appareil. Les corrections sont enregistr&#233;es directement dans ta base (une sauvegarde est faite chaque dimanche).</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+  document.getElementById('qc').scrollTop=st;
+  window._qcGroups=G;
+}
+function qcToggle(id,v){window._qcOpen=window._qcOpen||{};window._qcOpen[id]=v;openQC();}
+
+async function qcApply(item){
+  var r=await sb.from('programmes').update(item.ch).eq('id',item.m.id);
+  if(r.error)throw r.error;
+  Object.keys(item.ch).forEach(function(k){item.m[k]=item.ch[k];});
+}
+async function qcFix(gid,id){
+  var g=(window._qcGroups||[]).filter(function(x){return x.id===gid;})[0];if(!g)return;
+  var it=g.items.filter(function(x){return x.m.id===id;})[0];if(!it||!it.ch)return;
+  try{await qcApply(it);toast('&#10003; Corrigé : '+esc0(it.m.match));}catch(e){toast('&#9888; Erreur : '+e.message);}
+  qcAfter();
+}
+async function qcFixAll(gid){
+  var g=(window._qcGroups||[]).filter(function(x){return x.id===gid;})[0];if(!g)return;
+  var ok=0,ko=0;
+  for(var i=0;i<g.items.length;i++){if(!g.items[i].ch)continue;try{await qcApply(g.items[i]);ok++;}catch(e){ko++;}}
+  toast('&#10003; '+ok+' correction'+(ok>1?'s':'')+(ko?' — '+ko+' erreur(s)':''));
+  qcAfter();
+}
+function qcAfter(){try{buildTeams();updateStats();applyF();if(typeof applyClubF==='function')applyClubF();}catch(e){}openQC();qcBadge();}
 
 /* ===== LIEN DE PARTAGE ===== */
 function shareLink(){
