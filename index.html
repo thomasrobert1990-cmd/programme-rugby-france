@@ -2180,9 +2180,6 @@ function qcRun(){
   // 6. Quantités élevées
   add('qte','Quantité de 3 ou plus','À confirmer : vrais exemplaires ou erreur de saisie (comme Italie – France 1991) ?',
     allData.filter(function(m){return (+m.quantite||0)>=3;}).map(function(m){return {m:m,txt:'Quantité '+m.quantite};}),false);
-  // 7. Scan présent mais marqué manquant
-  add('scan','Scan présent mais marqué manquant','Tu as une photo de couverture : programme possédé, ou simple image de référence ?',
-    allData.filter(function(m){return !m.programme&&(m.image_couverture||'').trim();}).map(function(m){return {m:m,txt:'Couverture scannée, statut Manquant'};}),false);
   // 8. Possédé sans scan
   add('noscan','Possédé sans scan de couverture','À scanner pour compléter la collection.',
     allData.filter(function(m){return m.programme&&!(m.image_couverture||'').trim();}).map(function(m){return {m:m,txt:'Pas de couverture'};}),false);
