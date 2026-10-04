@@ -911,6 +911,49 @@ function renderStatsFor(scope){
     h+='</div>';
   }
 
+  // Complétude par adversaire (France) / par club (Club) — tableau complet triable
+  (function(){
+    var g={},cv=function(m){var v=parseFloat(String(m.cote||'').replace(/[^0-9.,]/g,'').replace(',','.'));return isNaN(v)?0:v;};
+    data.forEach(function(m){
+      var names=isClub?[m.domicile,m.exterieur]:[m.domicile==='France'?m.exterieur:m.domicile];
+      names.forEach(function(n){
+        n=(n||'').trim();if(!n||(!isClub&&n==='France'))return;
+        var o=g[n]=g[n]||{name:n,t:0,h:0,dt:0,dh:0,et:0,eh:0,val:0,nc:0};
+        var home=isClub?(m.domicile||'').trim()===n:m.domicile==='France';
+        o.t++;if(m.programme)o.h++;
+        if(home){o.dt++;if(m.programme)o.dh++;}else{o.et++;if(m.programme)o.eh++;}
+        if(!m.programme){var v=cv(m);if(v)o.val+=v;else o.nc++;}
+      });
+    });
+    var arr=Object.keys(g).map(function(k){var o=g[k];o.m=o.t-o.h;o.p=o.t?o.h/o.t:0;return o;});
+    var st=window._oppSort||{k:'t',asc:false};
+    arr.sort(function(a,b){var x=a[st.k],y=b[st.k];if(st.k==='name'){x=nm(x);y=nm(y);}return (x<y?-1:x>y?1:0)*(st.asc?1:-1)||b.t-a.t;});
+    var tot={m:0,val:0};data.forEach(function(m){if(!m.programme){tot.m++;tot.val+=cv(m);}}); // compté par match (une finale de club concerne 2 clubs)
+    var th=function(k,l,al){var on=st.k===k;return '<th onclick="setOppSort(\''+k+'\')" style="padding:7px 8px;text-align:'+(al||'right')+';font-size:10px;text-transform:uppercase;letter-spacing:1px;cursor:pointer;white-space:nowrap;color:'+(on?'var(--or)':'var(--gris)')+'">'+l+(on?(st.asc?' &#8593;':' &#8595;'):'')+'</th>';};
+    var homeL=isClub?'1er nomm&#233;':'&#192; domicile',awayL=isClub?'2e nomm&#233;':'&#192; l\'ext&#233;rieur';
+    h+='<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:18px 20px;margin-bottom:20px">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:10px"><div style="font-size:14px;font-weight:600;color:var(--blanc)">Compl&#233;tude par '+(isClub?'club':'adversaire')+'</div>'
+      +'<div style="font-size:12px;color:var(--gris)">'+arr.length+' '+(isClub?'clubs':'adversaires')+' &bull; '+tot.m+' manquants &bull; valeur cot&#233;e des manquants : <b style="color:var(--or)">'+Math.round(tot.val).toLocaleString('fr-FR')+' &#8364;</b></div></div>';
+    h+='<div style="overflow-x:auto;max-height:520px;overflow-y:auto;border:1px solid var(--bord);border-radius:6px"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead style="position:sticky;top:0;background:#0d1018"><tr>'
+      +th('name',isClub?'Club':'Adversaire','left')+th('t','Matchs')+th('h','Poss&#233;d&#233;s')+th('m','Manquants')+th('p','%')
+      +'<th style="padding:7px 8px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gris);white-space:nowrap">'+homeL+'</th>'
+      +'<th style="padding:7px 8px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gris);white-space:nowrap">'+awayL+'</th>'
+      +th('val','Valeur manq.')+'</tr></thead><tbody>';
+    arr.forEach(function(o){
+      var p=Math.round(o.p*100),col=p>=70?'#5de895':p>=40?'var(--or)':'#e06060';
+      h+='<tr style="border-top:1px solid rgba(42,48,64,.5);cursor:pointer" onclick="filterFromStats(\''+(isClub?'club':'opp')+'\',\''+o.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" title="Voir ces matchs">'
+        +'<td style="padding:6px 8px;color:var(--blanc);font-weight:600">'+o.name+'</td>'
+        +'<td style="padding:6px 8px;text-align:right;color:var(--gris)">'+o.t+'</td>'
+        +'<td style="padding:6px 8px;text-align:right">'+o.h+'</td>'
+        +'<td style="padding:6px 8px;text-align:right;color:'+(o.m?'#e06060':'#5de895')+';font-weight:700">'+(o.m||'&#10003;')+'</td>'
+        +'<td style="padding:6px 8px;text-align:right;min-width:90px"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><div style="width:44px;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:'+col+'"></div></div><b style="color:'+col+'">'+p+'%</b></div></td>'
+        +'<td style="padding:6px 8px;text-align:right;color:var(--gris)">'+o.dh+'/'+o.dt+'</td>'
+        +'<td style="padding:6px 8px;text-align:right;color:var(--gris)">'+o.eh+'/'+o.et+'</td>'
+        +'<td style="padding:6px 8px;text-align:right;color:var(--or);white-space:nowrap">'+(o.val?Math.round(o.val).toLocaleString('fr-FR')+' &#8364;':'')+(o.nc&&o.m?'<span style="color:var(--gris);font-size:11px"> +'+o.nc+' NC</span>':'')+'</td></tr>';
+    });
+    h+='</tbody></table></div><div style="font-size:11px;color:var(--gris);margin-top:6px">Clique un en-t&#234;te pour trier, une ligne pour voir les matchs. NC = manquant sans cote.</div></div>';
+  })();
+
   // Two columns: opponents (France) + old missing
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" class="stats-2col">';
   if(!isClub){
@@ -1814,6 +1857,8 @@ function toggleMobileClubFilters(){
 
 
 /* Filtrer depuis les stats (clic sur barre) */
+function setOppSort(k){var s=window._oppSort||{k:'t',asc:false};window._oppSort={k:k,asc:s.k===k?!s.asc:(k==='name')};renderStatsFor(window._statsScope||'france');}
+
 function filterFromStats(type, value){
   var isClub = (window._statsScope==='club');
   // Reset filters first
@@ -1843,6 +1888,12 @@ function filterFromStats(type, value){
         if(e1)e1.value=y1;if(e2)e2.value=y2;applyF();window.scrollTo(0,0);
       },100);
     }
+  } else if(type==='club'){
+    switchTab(3);
+    setTimeout(function(){
+      var ct=document.getElementById('cf-t');
+      if(ct)ct.value=value;applyClubF();window.scrollTo(0,0);
+    },100);
   } else if(type==='opp'){
     // Opponent filter (France)
     switchTab(0);
