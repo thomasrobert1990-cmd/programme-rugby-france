@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Programmes recherchés &amp; doublons</title>
+<meta name="theme-color" content="#002395">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@400;600;700&display=swap');
+:root{--or:#e8c84c;--fond:#0d1118;--carte:#141a24;--carte2:#1e2535;--bord:#1e2d4a;--gris:#7d8c9b;--blanc:#f0f4ff;--rouge:#ED2939;--bleu:#002395}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',sans-serif;background:var(--fond);color:var(--blanc);min-height:100vh}
+header{background:linear-gradient(135deg,#0a0d14,#001a4a,#1a000a);border-bottom:3px solid var(--rouge);padding:18px 16px 14px}
+h1{font-family:'Bebas Neue',cursive;letter-spacing:2px;font-size:26px;color:var(--or);line-height:1.1}
+.sub{color:#b7c3d6;font-size:14px;margin-top:4px;max-width:720px}
+.wrap{max-width:980px;margin:0 auto;padding:14px 16px 40px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tab{flex:1;min-width:150px;background:var(--carte);border:1px solid var(--bord);color:var(--gris);padding:11px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700;text-align:left}
+.tab b{display:block;font-family:'Bebas Neue',cursive;font-size:26px;letter-spacing:1px;font-weight:400;color:var(--blanc)}
+.tab.on{border-color:var(--or);color:var(--or)}
+.tab.on b{color:var(--or)}
+.seg{display:inline-flex;border:1px solid var(--bord);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.seg button{background:none;border:none;color:var(--gris);padding:8px 14px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--bleu);color:#fff}
+.filters{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.filters input,.filters select{width:100%;background:var(--carte2);border:1px solid var(--bord);color:var(--blanc);padding:9px 10px;border-radius:7px;font-family:inherit;font-size:15px}
+.yr{display:flex;gap:6px;align-items:center}
+.yr input{min-width:0}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--gris);font-size:14px;margin:6px 0 8px;flex-wrap:wrap}
+.meta button{background:none;border:1px solid var(--bord);color:var(--or);padding:6px 11px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px}
+table{width:100%;border-collapse:collapse;background:var(--carte);border:1px solid var(--bord);border-radius:8px;overflow:hidden}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gris);padding:9px 10px;border-bottom:1px solid var(--bord);cursor:pointer;user-select:none;white-space:nowrap}
+th.s{color:var(--or)}
+td{padding:9px 10px;border-bottom:1px solid #18202e;font-size:15px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+td.d{white-space:nowrap;color:#c9d3e3;font-variant-numeric:tabular-nums}
+td.a{font-weight:700}
+td.l{color:var(--gris);font-size:13px}
+.q{display:inline-block;background:rgba(232,200,76,.15);border:1px solid rgba(232,200,76,.5);color:var(--or);border-radius:10px;padding:1px 7px;font-size:12px;font-weight:700;margin-left:6px}
+.th{width:44px;height:58px;object-fit:cover;border-radius:4px;border:1px solid var(--bord);cursor:zoom-in;display:block;background:#0a0e15}
+.empty{padding:40px;text-align:center;color:var(--gris)}
+.zoom{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:9;padding:16px}
+.zoom img{max-width:100%;max-height:100%;border-radius:6px}
+.foot{color:var(--gris);font-size:12px;margin-top:16px;text-align:center}
+@media(max-width:640px){
+  .filters{grid-template-columns:1fr 1fr}
+  .filters .s1{grid-column:1/-1}
+  td.l,th.l{display:none}
+  td{font-size:14px;padding:8px}
+}
+@media print{
+  body{background:#fff;color:#000}header{background:none;border-bottom:2px solid #000}h1{color:#000}.sub{color:#333}
+  .tabs,.seg,.filters,.meta button,.zoom{display:none!important}
+  table{background:#fff;border:1px solid #999}td,th{color:#000!important;border-color:#ccc}.th{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>&#127945; Programmes de rugby &mdash; recherche &amp; &#233;changes</h1>
+  <div class="sub">Les programmes que je recherche et ceux que j'ai en double. Si vous en avez un qui m'int&#233;resse, ou si un doublon vous int&#233;resse, faites-moi signe&nbsp;!</div>
+</header>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab on" id="t-m" onclick="setTab('m')">Je recherche<b id="n-m">&mdash;</b></button>
+    <button class="tab" id="t-d" onclick="setTab('d')">Mes doublons<b id="n-d">&mdash;</b></button>
+  </div>
+  <div class="seg"><button class="on" id="s-f" onclick="setScope('france')">XV de France</button><button id="s-c" onclick="setScope('club')">Finales de club</button></div>
+  <div class="filters">
+    <input class="s1" type="search" id="q" placeholder="Rechercher (&#233;quipe, lieu, ann&#233;e&hellip;)" oninput="render()">
+    <select id="adv" onchange="render()"><option value="">Tous les adversaires</option></select>
+    <div class="yr"><input type="text" id="y1" inputmode="numeric" maxlength="4" placeholder="De" oninput="render()"><span>&#8594;</span><input type="text" id="y2" inputmode="numeric" maxlength="4" placeholder="&#192;" oninput="render()"></div>
+  </div>
+  <div class="meta"><span id="cnt">Chargement&hellip;</span><button onclick="window.print()">&#128424; Imprimer / PDF</button></div>
+  <div id="list"><div class="empty">Chargement&hellip;</div></div>
+  <div class="foot" id="maj"></div>
+</div>
+<div class="zoom" id="zoom" onclick="this.style.display='none'"><img id="zimg" alt=""></div>
+<script>
+var SB='https://qhpawhbumvrdtfxiwinz.supabase.co', KEY='sb_publishable_dM9TW2UePXyeNqCszB7rZg_ZxlqMJaT';
+// Colonnes strictement nécessaires : ni cotes, ni notes, ni état ne sont chargés.
+var COLS='id,date,year,match,domicile,exterieur,lieu,programme,quantite,categorie,sans_programme,image_couverture';
+var all=[],tab='m',scope='france',sortK='date',sortAsc=true;
+
+function nm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function adv(m){
+  var d=m.domicile||'',x=m.exterieur||'';
+  if(!d&&!x){var p=(m.match||'').split(/\s+[–—-]\s+/);d=p[0]||'';x=p[1]||'';}
+  var f=function(t){return nm(t).indexOf('france')>=0;};
+  if(f(d)&&!f(x))return x.trim(); if(f(x)&&!f(d))return d.trim();
+  return (d+(x?' / '+x:'')).trim();
+}
+function ak(s){return nm(s).replace(/[^a-z0-9]+/g,' ').trim();}  // clé tolérante (tirets, accents, espaces)
+var LABEL={};
+function dk(m){var p=(m.date||'').split('/');return p.length===3?p[2]+p[1]+p[0]:String(m.year||'');}
+function isMissing(m){return !m.programme;}            // "sans programme" compte aussi comme recherché
+function isDouble(m){return (+m.quantite||0)>1;}
+function inScope(m){return scope==='club'?m.categorie==='club':m.categorie!=='club';}
+
+async function load(){
+  try{
+    var rows=[],from=0;
+    while(true){
+      var r=await fetch(SB+'/rest/v1/programmes?select='+COLS+'&order=id.asc',{headers:{apikey:KEY,Range:from+'-'+(from+999),'Range-Unit':'items'}});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      var b=await r.json();rows=rows.concat(b);
+      if(b.length<1000)break;from+=1000;
+    }
+    all=rows.map(function(m){m._adv=scope==='club'?'':adv(m);return m;});
+    document.getElementById('maj').textContent='Liste à jour au '+new Date().toLocaleDateString('fr-FR')+' — mise à jour automatiquement.';
+    fillAdv();render();
+  }catch(e){
+    document.getElementById('list').innerHTML='<div class="empty">Impossible de charger la liste pour le moment. Réessayez plus tard.</div>';
+    document.getElementById('cnt').textContent='';
+  }
+}
+function fillAdv(){
+  var sel=document.getElementById('adv'),cur=sel.value,set={};
+  all.filter(inScope).forEach(function(m){
+    if(scope==='club'){[m.domicile,m.exterieur].forEach(function(t){if(t)set[t.trim()]=1;});}
+    else{var a=adv(m);if(a){var k=ak(a);if(!LABEL[k]||(a.indexOf('-')>=0&&LABEL[k].indexOf('-')<0))LABEL[k]=a;set[k]=1;}}
+  });
+  if(scope==='club'){var t={};Object.keys(set).forEach(function(n){var k=ak(n);if(!LABEL[k])LABEL[k]=n;t[k]=1;});set=t;}
+  var keys=Object.keys(set).sort();
+  sel.innerHTML='<option value="">'+(scope==='club'?'Toutes les équipes':'Tous les adversaires')+'</option>'+keys.map(function(k){return'<option value="'+esc(k)+'"'+(k===cur?' selected':'')+'>'+esc(LABEL[k])+'</option>';}).join('');
+}
+function setTab(t){tab=t;document.getElementById('t-m').classList.toggle('on',t==='m');document.getElementById('t-d').classList.toggle('on',t==='d');render();}
+function setScope(s){scope=s;document.getElementById('s-f').classList.toggle('on',s==='france');document.getElementById('s-c').classList.toggle('on',s==='club');document.getElementById('adv').value='';fillAdv();render();}
+function sortBy(k){if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=true;}render();}
+
+function render(){
+  var q=nm(document.getElementById('q').value.trim()),a=document.getElementById('adv').value;
+  var y1=+document.getElementById('y1').value||0,y2=+document.getElementById('y2').value||9999;
+  var base=all.filter(inScope);
+  document.getElementById('n-m').textContent=base.filter(isMissing).length;
+  document.getElementById('n-d').textContent=base.filter(isDouble).length;
+  var rows=base.filter(tab==='m'?isMissing:isDouble).filter(function(m){
+    var y=+m.year||+(m.date||'').slice(-4)||0; if(y<y1||y>y2)return false;
+    if(a){ if(scope==='club'){if(ak(m.domicile)!==a&&ak(m.exterieur)!==a)return false;} else if(ak(adv(m))!==a)return false; }
+    if(q&&nm([m.match,m.lieu,m.date,adv(m)].join(' ')).indexOf(q)<0)return false;
+    return true;
+  });
+  var key={date:dk,adv:function(m){return nm(scope==='club'?m.match:adv(m))+dk(m);},lieu:function(m){return nm(m.lieu)+dk(m);}}[sortK];
+  rows.sort(function(x,y){var p=key(x),r=key(y);return (p<r?-1:p>r?1:0)*(sortAsc?1:-1);});
+  document.getElementById('cnt').textContent=rows.length+' programme'+(rows.length>1?'s':'')+(tab==='m'?' recherché'+(rows.length>1?'s':''):' en double');
+  if(!rows.length){document.getElementById('list').innerHTML='<div class="empty">Aucun programme pour ces critères.</div>';return;}
+  var ar=function(k){return sortK===k?(sortAsc?' ↑':' ↓'):'';},cl=function(k){return sortK===k?' class="s"':'';};
+  var h='<table><thead><tr>'
+    +(tab==='d'?'<th style="cursor:default"></th>':'')
+    +'<th'+cl('date')+' onclick="sortBy(\'date\')">Date'+ar('date')+'</th>'
+    +'<th'+cl('adv')+' onclick="sortBy(\'adv\')">'+(scope==='club'?'Match':'Adversaire')+ar('adv')+'</th>'
+    +(scope==='club'?'':'<th style="cursor:default">Match</th>')
+    +'<th class="l'+(sortK==='lieu'?' s':'')+'" onclick="sortBy(\'lieu\')">Lieu'+ar('lieu')+'</th></tr></thead><tbody>';
+  rows.forEach(function(m){
+    var img=(m.image_couverture||'').trim();
+    h+='<tr>'
+      +(tab==='d'?'<td>'+(img?'<img class="th" loading="lazy" src="'+esc(img)+'" alt="" onclick="zoom(this.src)">':'')+'</td>':'')
+      +'<td class="d">'+esc(m.date)+'</td>'
+      +'<td class="a">'+esc(scope==='club'?m.match:adv(m))+(tab==='d'?'<span class="q">×'+(+m.quantite)+'</span>':'')+'</td>'
+      +(scope==='club'?'':'<td>'+esc(m.match)+'</td>')
+      +'<td class="l">'+esc(m.lieu)+'</td></tr>';
+  });
+  document.getElementById('list').innerHTML=h+'</tbody></table>';
+}
+function zoom(src){document.getElementById('zimg').src=src;document.getElementById('zoom').style.display='flex';}
+load();
+</script>
+</body>
+</html>

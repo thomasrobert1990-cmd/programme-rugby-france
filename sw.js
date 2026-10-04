@@ -1,5 +1,5 @@
 // Service Worker - Ma Collection Rugby
-const CACHE = 'rugby-v25';
+const CACHE = 'rugby-v26';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', function(e){
@@ -30,9 +30,9 @@ self.addEventListener('fetch', function(e){
   if(e.request.mode === 'navigate' || /\/(index\.html)?(\?.*)?$/.test(url.replace(self.registration.scope,'/'))){
     e.respondWith(
       fetch(e.request, {cache:'no-cache'}).then(function(resp){
-        if(resp.ok){ var cl = resp.clone(); caches.open(CACHE).then(function(c){ c.put('./index.html', cl); }); }
+        if(resp.ok){ var cl = resp.clone(); caches.open(CACHE).then(function(c){ c.put(e.request, cl); }); }
         return resp;
-      }).catch(function(){ return caches.match('./index.html').then(function(r){ return r || caches.match('./'); }); })
+      }).catch(function(){ return caches.match(e.request).then(function(r){ return r || caches.match('./index.html'); }); })
     );
     return;
   }

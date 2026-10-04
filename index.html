@@ -227,6 +227,7 @@ textarea.fi{resize:vertical;min-height:58px}
         <button class="btn-o" onclick="exportCSV()">&#11015; CSV</button>
         <button class="btn-o" onclick="exportXLSX()">&#11015; Excel</button>
         <button class="btn-o" onclick="exportPDF()">&#11015; PDF</button>
+        <button class="btn-o" onclick="shareLink()" title="Copier le lien de la page publique (recherch&#233;s + doublons, sans cotes)">&#128279; Partager</button>
         <button class="btn-o bk-btn" onclick="backupAll()" title="T&#233;l&#233;charger une sauvegarde compl&#232;te">&#128190; Sauvegarde</button>
         <button class="btn-b" onclick="openImport()">&#11014; Import scans</button>
         <label>Trier&#160;:</label>
@@ -277,6 +278,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <div class="tr">
         <button class="btn-o" onclick="exportXLSX()">&#11015; Excel</button>
         <button class="btn-o" onclick="exportPDF()">&#11015; PDF</button>
+        <button class="btn-o" onclick="shareLink()" title="Copier le lien de la page publique (recherch&#233;s + doublons, sans cotes)">&#128279; Partager</button>
         <button class="btn-o bk-btn" onclick="backupAll()" title="T&#233;l&#233;charger une sauvegarde compl&#232;te">&#128190; Sauvegarde</button>
         <button class="btn-b" onclick="openImport('club')">&#11014; Import scans</button>
         <label>Trier&#160;:</label>
@@ -1909,6 +1911,15 @@ if('serviceWorker' in navigator){
   });
 }
 
+
+/* ===== LIEN DE PARTAGE ===== */
+function shareLink(){
+  var url=location.href.split('#')[0].split('?')[0].replace(/index\.html$/,'').replace(/\/?$/,'/')+'partage.html';
+  var done=function(){toast('&#128279; Lien copié : recherchés + doublons, sans cotes');};
+  if(navigator.share&&/iPhone|iPad|Android/i.test(navigator.userAgent)){navigator.share({title:'Programmes recherchés & doublons',url:url}).catch(function(){});return;}
+  if(navigator.clipboard){navigator.clipboard.writeText(url).then(done,function(){window.open(url,'_blank');});}
+  else window.open(url,'_blank');
+}
 
 /* ===== SAUVEGARDE COMPLETE ===== */
 function _bkLast(){try{return +localStorage.getItem('rugby_last_backup')||0;}catch(e){return 0;}}
