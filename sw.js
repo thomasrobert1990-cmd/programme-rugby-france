@@ -1,9 +1,10 @@
 // Service Worker - Ma Collection Rugby
-const CACHE = 'rugby-v23';
+const CACHE = 'rugby-v24';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', function(e){
-  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(ASSETS); }));
+  // cache:'reload' = ignore le cache HTTP du navigateur (sinon on peut remettre l'ancienne page en cache)
+  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(ASSETS.map(function(u){ return new Request(u, {cache:'reload'}); })); }));
   self.skipWaiting();
 });
 
@@ -25,7 +26,17 @@ self.addEventListener('fetch', function(e){
     );
     return;
   }
-  // Cache-first for app shell + images
+  // Network-first pour la page elle-même : toujours la dernière version si on est en ligne
+  if(e.request.mode === 'navigate' || /\/(index\.html)?(\?.*)?$/.test(url.replace(self.registration.scope,'/'))){
+    e.respondWith(
+      fetch(e.request, {cache:'no-cache'}).then(function(resp){
+        if(resp.ok){ var cl = resp.clone(); caches.open(CACHE).then(function(c){ c.put('./index.html', cl); }); }
+        return resp;
+      }).catch(function(){ return caches.match('./index.html').then(function(r){ return r || caches.match('./'); }); })
+    );
+    return;
+  }
+  // Cache-first for images + other assets
   e.respondWith(
     caches.match(e.request).then(function(cached){
       return cached || fetch(e.request).then(function(resp){
