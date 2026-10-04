@@ -66,6 +66,7 @@ header{background:linear-gradient(135deg,#0a0d14,#001a4a,#1a000a);border-bottom:
 .btn{background:var(--vert);border:none;color:#fff;padding:8px 14px;border-radius:5px;cursor:pointer;font-family:'Bebas Neue',cursive;letter-spacing:1px;font-size:15px;transition:.2s}
 .btn:hover{background:var(--vert2)}
 .btn-o{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.35);color:var(--or);padding:7px 11px;border-radius:5px;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif}
+.bk-btn.due{border-color:var(--rouge);color:var(--rouge2);animation:bkp 2s infinite}@keyframes bkp{50%{opacity:.55}}
 .btn-b{background:rgba(144,176,240,.1);border:1px solid rgba(144,176,240,.35);color:#90b0f0;padding:7px 11px;border-radius:5px;cursor:pointer;font-size:13px;font-family:'Source Sans 3',sans-serif}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:12px}
 .card{background:var(--carte);border:1px solid var(--bord);border-radius:9px;overflow:hidden;cursor:pointer;transition:all .2s}
@@ -226,6 +227,7 @@ textarea.fi{resize:vertical;min-height:58px}
         <button class="btn-o" onclick="exportCSV()">&#11015; CSV</button>
         <button class="btn-o" onclick="exportXLSX()">&#11015; Excel</button>
         <button class="btn-o" onclick="exportPDF()">&#11015; PDF</button>
+        <button class="btn-o bk-btn" onclick="backupAll()" title="T&#233;l&#233;charger une sauvegarde compl&#232;te">&#128190; Sauvegarde</button>
         <button class="btn-b" onclick="openImport()">&#11014; Import scans</button>
         <label>Trier&#160;:</label>
         <select id="srt" onchange="applyF()">
@@ -275,6 +277,7 @@ textarea.fi{resize:vertical;min-height:58px}
       <div class="tr">
         <button class="btn-o" onclick="exportXLSX()">&#11015; Excel</button>
         <button class="btn-o" onclick="exportPDF()">&#11015; PDF</button>
+        <button class="btn-o bk-btn" onclick="backupAll()" title="T&#233;l&#233;charger une sauvegarde compl&#232;te">&#128190; Sauvegarde</button>
         <button class="btn-b" onclick="openImport('club')">&#11014; Import scans</button>
         <label>Trier&#160;:</label>
         <select id="csrt" onchange="applyClubF()">
@@ -1905,6 +1908,50 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(function(e){ console.log('SW registration failed', e); });
   });
 }
+
+
+/* ===== SAUVEGARDE COMPLETE ===== */
+function _bkLast(){try{return +localStorage.getItem('rugby_last_backup')||0;}catch(e){return 0;}}
+function _bkMark(){
+  var last=_bkLast(),due=!last||(Date.now()-last)>7*864e5;
+  document.querySelectorAll('.bk-btn').forEach(function(b){
+    b.classList.toggle('due',due);
+    b.title=last?('Dernière sauvegarde : '+new Date(last).toLocaleDateString('fr-FR')):'Aucune sauvegarde sur cet appareil';
+  });
+}
+async function backupAll(){
+  toast('&#128190; Sauvegarde en cours...');
+  // Relit toute la base directement (pas seulement ce qui est affiché)
+  var rows=[],from=0,step=1000;
+  while(true){
+    var r=await sb.from('programmes').select('*').order('id',{ascending:true}).range(from,from+step-1);
+    if(r.error){toast('&#9888; Erreur sauvegarde : '+r.error.message);return;}
+    rows=rows.concat(r.data||[]);
+    if(!r.data||r.data.length<step)break;
+    from+=step;
+  }
+  var d=new Date(),stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  // 1) JSON complet (toutes les colonnes, pour restauration)
+  var payload={app:'programme-rugby-france',table:'programmes',date:d.toISOString(),count:rows.length,rows:rows};
+  var blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
+  var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='rugby_sauvegarde_'+stamp+'.json';a.click();
+  setTimeout(function(){URL.revokeObjectURL(u);},2000);
+  // 2) Excel complet lisible (France + Club, toutes colonnes)
+  try{
+    var cols={};rows.forEach(function(m){Object.keys(m).forEach(function(k){cols[k]=1;});});
+    var keys=Object.keys(cols);
+    var wb=XLSX.utils.book_new();
+    [['France',function(m){return m.categorie!=='club';}],['Club',function(m){return m.categorie==='club';}]].forEach(function(s){
+      var sub=rows.filter(s[1]).map(function(m){var o={};keys.forEach(function(k){var v=m[k];o[k]=(v&&typeof v==='object')?JSON.stringify(v):(v==null?'':v);});return o;});
+      if(sub.length){var ws=XLSX.utils.json_to_sheet(sub,{header:keys});ws['!autofilter']={ref:ws['!ref']};XLSX.utils.book_append_sheet(wb,ws,s[0]);}
+    });
+    setTimeout(function(){XLSX.writeFile(wb,'rugby_sauvegarde_'+stamp+'.xlsx');},600);
+  }catch(e){console.warn('Excel sauvegarde',e);}
+  try{localStorage.setItem('rugby_last_backup',String(Date.now()));}catch(e){}
+  _bkMark();
+  toast('&#128190; Sauvegarde téléchargée : '+rows.length+' programmes (JSON + Excel)');
+}
+setTimeout(_bkMark,500);
 
 loadAll();
 </script>
