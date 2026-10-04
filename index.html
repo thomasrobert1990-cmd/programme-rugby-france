@@ -512,9 +512,8 @@ function updateStats(){
   var france=allData.filter(function(m){return m.categorie!=='club';});
   var tot=france.length;
   var p=france.filter(function(m){return m.programme;}).length;
-  // Programmes collectionnables = total - sans programme
-  var sansProg=france.filter(function(m){return m.sans_programme;}).length;
-  var collectionnable=tot-sansProg;
+  // « Sans programme » compte comme manquant (l'info peut être fausse)
+  var collectionnable=tot;
   var manquants=collectionnable-p;
   document.getElementById('ht').textContent=tot;
   document.getElementById('hp').textContent=p;
@@ -555,7 +554,6 @@ function applyF(){
     if(pf==='scan'&&(!m.image_couverture||!m.image_couverture.trim()))return false;
     if(pf==='fav'&&!m.favori)return false;
     if(pf==='sans'&&!m.sans_programme)return false;
-    if(pf==='non'&&m.sans_programme)return false;
     if(m.categorie==='club')return false;
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
     if(t&&m.domicile!==t&&m.exterieur!==t)return false;
@@ -784,8 +782,7 @@ function renderStatsFor(scope){
   var data=allData.filter(function(m){return isClub?m.categorie==='club':m.categorie!=='club';});
   var total=data.length;
   var have=data.filter(function(m){return m.programme;}).length;
-  var sansProg=data.filter(function(m){return m.sans_programme;}).length;
-  var collectionnable=total-sansProg;
+  var collectionnable=total; // « sans programme » compte comme manquant
   var pct=collectionnable?Math.round(have/collectionnable*100):0;
   var withImg=data.filter(function(m){return m.image_couverture;}).length;
   var withCote=data.filter(function(m){return m.cote&&m.cote.trim();});
@@ -1637,7 +1634,6 @@ function applyClubF(){
     if(clubPf==='non'&&m.programme)return false;
     if(clubPf==='fav'&&!m.favori)return false;
     if(clubPf==='sans'&&!m.sans_programme)return false;
-    if(clubPf==='non'&&m.sans_programme)return false;
     var yr=+m.year||0;if(yr<y1||yr>y2)return false;
     if(s){var h=nm((m.match||'')+' '+(m.date||'')+' '+(m.lieu||''));if(h.indexOf(s)<0)return false;}
     return true;
