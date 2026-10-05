@@ -1,5 +1,6 @@
 // Service Worker - Ma Collection Rugby
-const CACHE = 'rugby-v30';
+const CACHE = 'rugby-v31';
+const IMG_CACHE = 'rugby-img-v1'; // images conservées d'une version à l'autre
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', function(e){
@@ -11,7 +12,7 @@ self.addEventListener('install', function(e){
 self.addEventListener('activate', function(e){
   e.waitUntil(
     caches.keys().then(function(keys){
-      return Promise.all(keys.filter(function(k){ return k !== CACHE; }).map(function(k){ return caches.delete(k); }));
+      return Promise.all(keys.filter(function(k){ return k !== CACHE && k !== IMG_CACHE; }).map(function(k){ return caches.delete(k); }));
     })
   );
   self.clients.claim();
@@ -43,7 +44,7 @@ self.addEventListener('fetch', function(e){
         // Cache Supabase storage images
         if(url.indexOf('/storage/') >= 0 && resp.ok){
           var clone = resp.clone();
-          caches.open(CACHE).then(function(c){ c.put(e.request, clone); });
+          caches.open(IMG_CACHE).then(function(c){ c.put(e.request, clone); });
         }
         return resp;
       });
