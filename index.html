@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v2.1 - 2026-10-05 : design + perf -->
+<!-- v2.2 - 2026-10-05 : accueil, mur, chasse, fiche vitrine -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -183,6 +183,7 @@ textarea.fi{resize:vertical;min-height:58px}
   .sidebar.mobile-open{display:block;position:fixed;top:0;left:0;width:85%;max-width:320px;height:100vh;max-height:none;z-index:200;overflow-y:auto;box-shadow:2px 0 20px rgba(0,0,0,.6)}
   .hstats{display:none}
   header{padding:0 12px;gap:8px}
+  .hunt-btn{display:none}
   .logo{font-size:21px;margin-right:auto}
   .tabs-nav{padding:0 6px}
   .tab-btn{padding:12px 12px;font-size:14px}
@@ -218,31 +219,140 @@ textarea.fi{resize:vertical;min-height:58px}
 .img-clickable{cursor:zoom-in;transition:opacity .2s}
 .img-clickable:hover{opacity:.85}
 
+/* ===== ACCUEIL (tableau de bord) ===== */
+.home-wrap,.wall-wrap{display:none;padding:20px 24px 40px;max-width:1180px;margin:0 auto}
+.h-hero{background:linear-gradient(135deg,#12204a,#0d1424 60%);border:1px solid var(--bord);border-radius:14px;padding:22px 24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.h-big{font-family:'Bebas Neue',cursive;font-size:64px;line-height:.9;color:var(--or)}
+.h-big small{font-size:26px;color:var(--gris)}
+.h-lbl{font-size:13px;color:var(--gris);text-transform:uppercase;letter-spacing:1px}
+.h-prog{flex:1;min-width:240px}
+.h-bar{height:14px;background:rgba(255,255,255,.07);border-radius:8px;overflow:hidden;margin:10px 0 6px}
+.h-bar>div{height:100%;background:linear-gradient(90deg,#1c3fb8,#4f74ff);border-radius:8px}
+.h-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.h-tile{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;color:var(--blanc)}
+.h-tile:hover{border-color:var(--gris)}
+.h-tile .v{font-family:'Bebas Neue',cursive;font-size:34px;line-height:1}
+.h-tile .l{font-size:12.5px;color:var(--gris);margin-top:2px}
+.h-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+.h-card{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.h-card h3{font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:1.5px;color:var(--or);margin-bottom:10px;font-weight:400}
+.h-card .sub{font-size:12.5px;color:var(--gris);margin:-6px 0 10px}
+.dec{display:grid;grid-template-columns:56px 1fr 74px;gap:10px;align-items:center;padding:5px 4px;border-radius:6px;cursor:pointer;width:100%;background:none;border:none;color:var(--blanc);text-align:left}
+.dec:hover{background:rgba(255,255,255,.04)}
+.dec .y{font-family:'Bebas Neue',cursive;font-size:17px;color:var(--blanc)}
+.dec .b{height:10px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden}
+.dec .b>div{height:100%;background:#2a52d6;border-radius:6px}
+.dec .b>div.full{background:var(--ok)}
+.dec .n{font-size:12.5px;color:var(--gris);text-align:right;white-space:nowrap}
+.lst{display:flex;flex-direction:column}
+.lst button{display:flex;justify-content:space-between;gap:10px;align-items:center;background:none;border:none;border-bottom:1px solid rgba(36,50,80,.6);color:var(--blanc);text-align:left;padding:9px 2px;cursor:pointer;font-size:14px}
+.lst button:hover{color:var(--or)}
+.lst .d{color:var(--gris);font-size:12.5px;white-space:nowrap}
+.h-empty{color:var(--gris);font-size:13.5px;padding:6px 0}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.thumbs button{padding:0;border:1px solid var(--bord);border-radius:8px;overflow:hidden;cursor:pointer;background:#0d1320;aspect-ratio:3/4;position:relative}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs span{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#fff;font-size:10.5px;padding:14px 5px 4px;text-align:left;line-height:1.2}
+/* ===== MUR DE COUVERTURES ===== */
+.w-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.seg{display:inline-flex;background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:3px}
+.seg button{background:none;border:none;color:var(--gris);padding:7px 14px;border-radius:7px;cursor:pointer;font-size:14px;font-weight:600}
+.seg button.on{background:var(--carte2);color:#fff;box-shadow:inset 0 0 0 1px var(--bord)}
+.w-dec{font-family:'Bebas Neue',cursive;font-size:30px;letter-spacing:1px;color:var(--or);margin:18px 0 8px;display:flex;align-items:baseline;gap:10px;position:sticky;top:106px;background:var(--fond);padding:4px 0;z-index:5}
+.w-dec small{font-family:'Source Sans 3',sans-serif;font-size:13px;color:var(--gris);letter-spacing:0}
+.w-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.w-grid button{padding:0;border:none;border-radius:8px;overflow:hidden;cursor:pointer;background:#0d1320;aspect-ratio:3/4;position:relative;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:transform .2s}
+.w-grid button:hover{transform:scale(1.03)}
+.w-grid img{width:100%;height:100%;object-fit:cover;display:block}
+.w-grid span{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.9));color:#fff;font-size:12px;padding:22px 8px 7px;text-align:left;line-height:1.25}
+.w-grid span b{display:block;font-family:'Bebas Neue',cursive;font-weight:400;letter-spacing:1px;color:var(--or);font-size:13px}
+/* ===== MODE CHASSE ===== */
+.hunt{display:none;position:fixed;inset:0;background:var(--fond);z-index:300;flex-direction:column}
+.hunt.open{display:flex}
+.hunt-top{padding:14px 16px;border-bottom:1px solid var(--bord);background:var(--nav);display:flex;gap:10px;align-items:center}
+.hunt-top input{flex:1;font-size:19px;padding:13px 16px;border-radius:12px;border:2px solid var(--or);background:#0b0f17;color:#fff;outline:none;min-width:0}
+.hunt-top button{background:none;border:1px solid var(--bord);color:var(--blanc);border-radius:10px;width:48px;height:48px;font-size:20px;cursor:pointer;flex-shrink:0}
+.hunt-help{color:var(--gris);font-size:14px;padding:18px 18px 0;line-height:1.6}
+.hunt-res{flex:1;overflow-y:auto;padding:10px 12px 30px}
+.hr{display:flex;align-items:center;gap:12px;width:100%;background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;color:var(--blanc);text-align:left}
+.hr .st{flex-shrink:0;width:92px;text-align:center;border-radius:9px;padding:8px 4px;font-weight:700;font-size:13px;line-height:1.15}
+.hr .st.ok{background:rgba(93,232,149,.15);color:var(--ok);border:1px solid rgba(93,232,149,.45)}
+.hr .st.dbl{background:rgba(232,200,76,.15);color:var(--or);border:1px solid rgba(232,200,76,.5)}
+.hr .st.ko{background:rgba(255,122,122,.14);color:var(--ko);border:1px solid rgba(255,122,122,.5)}
+.hr .st.sp{background:rgba(140,140,160,.18);color:#c0c0d0;border:1px solid rgba(140,140,160,.45)}
+.hr .tx{min-width:0}
+.hr .tx b{display:block;font-size:16px}
+.hr .tx span{font-size:13px;color:var(--gris)}
+/* ===== FICHE VITRINE ===== */
+.mv-hero{position:relative;background:#0b0f17;display:flex;justify-content:center;align-items:center;min-height:180px;max-height:52vh;overflow:hidden;border-bottom:1px solid var(--bord)}
+.mv-hero img{max-width:100%;max-height:52vh;object-fit:contain;display:block;cursor:zoom-in}
+.mv-hero .ph{font-size:64px;opacity:.15;padding:40px}
+.mv-st{position:absolute;top:12px;left:12px}
+.mv-st .bp{font-size:13px;padding:4px 11px;backdrop-filter:blur(4px)}
+.mv-b{padding:16px 20px 18px}
+.mv-score{font-family:'Bebas Neue',cursive;font-size:40px;color:var(--or);line-height:1;margin-bottom:12px;letter-spacing:1px}
+.mv-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;margin-bottom:12px}
+.mv-facts div{font-size:14.5px}
+.mv-facts span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gris)}
+.mv-notes{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;font-size:14px;color:#d6dbe6;margin-bottom:12px;white-space:pre-wrap}
+.mv-fdm{display:inline-flex;align-items:center;gap:10px;cursor:zoom-in;background:none;border:1px solid var(--bord);border-radius:8px;padding:6px 10px 6px 6px;color:var(--blanc);margin-bottom:12px}
+.mv-fdm img{width:44px;height:58px;object-fit:cover;border-radius:4px}
+.mv-hint{display:none;font-size:12px;color:var(--gris);text-align:center;margin-top:8px}
+.h-fab{display:none}
+@media(max-width:900px){.h-grid{grid-template-columns:1fr}.h-tiles{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  .home-wrap,.wall-wrap{padding:14px 12px 90px}
+  .h-hero{padding:16px}.h-big{font-size:52px}
+  .w-grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:7px}
+  .w-dec{top:106px;font-size:26px}
+  .mv-facts{grid-template-columns:repeat(2,1fr)}
+  .mv-hint{display:block}
+  .h-fab{display:flex;position:fixed;right:16px;bottom:18px;z-index:90;background:var(--or);color:#111;border:none;border-radius:28px;height:54px;padding:0 20px;font-weight:700;font-size:16px;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);cursor:pointer}
+  #ov{padding:0!important}
+  #ov .modal{border-radius:0;min-height:100vh;border:none}
+}
+
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo" onclick="switchTab(0);window.scrollTo(0,0)" style="cursor:pointer">&#127945; <span style="color:#fff">Ma</span> <span style="color:var(--rouge)">Collection</span> <span style="color:var(--vert2)">Rugby</span></div>
+  <div class="logo" onclick="switchTab(4);window.scrollTo(0,0)" style="cursor:pointer">&#127945; <span style="color:#fff">Ma</span> <span style="color:var(--rouge)">Collection</span> <span style="color:var(--vert2)">Rugby</span></div>
   <div class="hstats">
     <div class="hs"><span class="v" id="ht">&#8212;</span><span class="l">Total</span></div>
     <div class="hs"><span class="v" id="hp">&#8212;</span><span class="l">Programmes</span></div>
     <div class="hs"><span class="v" id="hpc">&#8212;</span><span class="l">Compl&#233;t&#233;</span></div>
     <div class="hs"><span class="v" id="hm">&#8212;</span><span class="l">Manquants</span></div>
   </div>
+  <button class="hbtn hunt-btn" onclick="openHunt()" title="Mode chasse : est-ce que je l'ai d&#233;j&#224; ?" aria-label="Mode chasse" style="color:var(--or)">&#128269;</button>
   <button class="hbtn" onclick="backupData()" title="Sauvegarder la base (téléchargement)" aria-label="Sauvegarder la base" style="color:var(--ok)">&#128190;</button>
   <button class="hbtn" onclick="forceUpdate()" title="Mettre à jour l'app" aria-label="Mettre à jour l'app">&#8635;</button>
 </header>
 
 <div class="tabs-nav">
-  <button class="tab-btn on" id="tab-col" onclick="switchTab(0)">&#127981; France</button>
+  <button class="tab-btn on" id="tab-home" onclick="switchTab(4)">&#127968; Accueil</button>
+  <button class="tab-btn" id="tab-col" onclick="switchTab(0)">&#127981; France</button>
   <button class="tab-btn" id="tab-club" onclick="switchTab(3)">&#127942; Clubs</button>
+  <button class="tab-btn" id="tab-wall" onclick="switchTab(5)">&#128444; Mur</button>
   <button class="tab-btn" id="tab-stats" onclick="switchTab(1)">&#128200; Stats &amp; Valeur</button>
   <button class="tab-btn" id="tab-map" onclick="switchTab(2)">&#127758; Carte &amp; Timeline</button>
 </div>
 
+<div class="home-wrap" id="view-home"><div id="home-content"><div class="no-res">Chargement&#8230;</div></div></div>
+<div class="wall-wrap" id="view-wall"><div id="wall-content"></div></div>
+
+<!-- MODE CHASSE -->
+<div class="hunt" id="hunt" role="dialog" aria-label="Mode chasse">
+  <div class="hunt-top">
+    <input type="search" id="hunt-q" placeholder="Ex. : galles 1954, 1987 australie..." autocomplete="off" oninput="huntSearch()">
+    <button onclick="closeHunt()" aria-label="Fermer">&#10005;</button>
+  </div>
+  <div class="hunt-res" id="hunt-res"></div>
+</div>
+<button class="h-fab" onclick="openHunt()" aria-label="Mode chasse">&#128269; Chasse</button>
+
 <div class="mobile-overlay" id="m-overlay" onclick="toggleMobileFilters()"></div>
-<div class="app" id="view-col">
+<div class="app" id="view-col" style="display:none">
   <aside class="sidebar">
     <div class="sb-t">&#128269; Filtres</div>
     <div class="fg"><span class="fl">Recherche</span><input type="text" id="f-s" placeholder="&#201;quipe, lieu..."></div>
@@ -382,7 +492,7 @@ textarea.fi{resize:vertical;min-height:58px}
   <div id="map-content"></div>
 </div>
 
-<div id="ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;overflow-y:auto;padding:16px" onclick="closeOv(event)">
+<div id="ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;overflow-y:auto;padding:16px" onclick="closeOv(event)">
   <div class="modal">
     <div class="mh" style="display:flex;align-items:center;gap:10px">
       <button class="mnav" id="m-prev" onclick="navModal(-1)" title="Pr&#233;c&#233;dent">&#8249;</button>
@@ -394,7 +504,8 @@ textarea.fi{resize:vertical;min-height:58px}
       <span class="mpos" id="m-pos"></span>
       <button class="mc" onclick="closeModal()" style="flex-shrink:0">&#10005;</button>
     </div>
-    <div class="mb">
+    <div id="m-view"></div>
+    <div class="mb" id="m-edit">
       <div class="fg2">
         <div><span class="fl2">Date (JJ/MM/AAAA)</span><input class="fi" type="text" id="i-date" placeholder="27/02/1926"></div>
         <div><span class="fl2">Score</span><input class="fi" type="text" id="i-score" placeholder="15 &#8211; 9"></div>
@@ -566,19 +677,21 @@ async function storeImage(dataUrl,id,kind){
 }
 
 /* TAB SWITCH */
+var _curTab=4;
 function switchTab(t){
-  var isCol=(t==0||t==='col'),isStats=(t==1||t==='stats'),isMap=(t==2||t==='map'),isClub=(t==3||t==='club');
-  document.getElementById('view-col').style.display=isCol?'flex':'none';
-  document.getElementById('view-stats').style.display=isStats?'block':'none';
-  document.getElementById('view-map').style.display=isMap?'block':'none';
-  document.getElementById('view-club').style.display=isClub?'flex':'none';
-  document.getElementById('tab-col').classList.toggle('on',isCol);
-  document.getElementById('tab-stats').classList.toggle('on',isStats);
-  var tm=document.getElementById('tab-map');if(tm)tm.classList.toggle('on',isMap);
-  var tc=document.getElementById('tab-club');if(tc)tc.classList.toggle('on',isClub);
-  if(isStats)renderStats();
-  if(isMap)renderMapTimeline();
-  if(isClub){applyClubF();if(!document.getElementById('cgrid').innerHTML)applyClubF();}
+  var map={0:'col',1:'stats',2:'map',3:'club',4:'home',5:'wall',col:'col',stats:'stats',map:'map',club:'club',home:'home',wall:'wall'};
+  var k=map[t]||'home';_curTab=k;
+  var disp={col:'flex',club:'flex',stats:'block',map:'block',home:'block',wall:'block'};
+  ['col','stats','map','club','home','wall'].forEach(function(v){
+    var el=document.getElementById('view-'+v);if(el)el.style.display=(v===k)?disp[v]:'none';
+    var tb=document.getElementById('tab-'+v);if(tb)tb.classList.toggle('on',v===k);
+  });
+  var tb=document.getElementById('tab-'+k);if(tb&&tb.scrollIntoView)tb.scrollIntoView({block:'nearest',inline:'nearest'});
+  if(k==='stats')renderStats();
+  if(k==='map')renderMapTimeline();
+  if(k==='club')applyClubF();
+  if(k==='home')renderHome();
+  if(k==='wall')renderWall();
 }
 
 /* COLLECTION */
@@ -588,7 +701,7 @@ function _cacheSave(rows){
   try{localStorage.setItem(CACHE_KEY,JSON.stringify(rows.map(function(m){var o={};for(var k in m){var v=m[k];o[k]=(typeof v==='string'&&v.indexOf('data:')===0)?'':v;}return o;})));}catch(e){}
 }
 function _cacheRead(){try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'null');}catch(e){return null;}}
-function _refreshAll(){buildTeams();updateStats();applyF();if(_isClubView())applyClubF();}
+function _refreshAll(){buildTeams();updateStats();applyF();if(_isClubView())applyClubF();if(_curTab==='home')renderHome();if(_curTab==='wall')renderWall();}
 async function loadAll(){
   var cached=!allData.length&&_cacheRead();
   if(cached&&cached.length){allData=cached;_refreshAll();}
@@ -792,11 +905,13 @@ function goP(p){var tot=Math.ceil(filtered.length/perPage);if(p<1||p>tot)return;
 
 /* MODAL */
 var _modalList=[], _modalIdx=-1;
-function openModal(id){
+var _modalNav=false;
+function openModal(id,list){
   editId=id;iC='';iF='';
-  // Determine current list (France or Club view)
-  var clubView=document.getElementById('view-club').style.display!=='none';
-  _modalList = clubView ? clubFiltered : filtered;
+  // Liste parcourue avec ‹ › : celle passée en paramètre (Accueil, Mur, Chasse) ou la vue courante
+  if(list)_modalList=list;
+  else if(!_modalNav)_modalList=_isClubView()?clubFiltered:filtered;
+  _modalNav=false;
   _modalIdx = _modalList.findIndex(function(m){return m.id===id;});
   updateModalNav();
   if(id===null){
@@ -804,14 +919,17 @@ function openModal(id){
     document.getElementById('m-s').textContent='';
     document.getElementById('btn-del').style.display='none';
     clearForm();
+    showEdit();
   }else{
     var m=allData.filter(function(x){return x.id===id;})[0];if(!m)return;
     document.getElementById('m-t').textContent=m.match||'Programme';
     document.getElementById('m-s').textContent=(m.date||'')+(m.lieu?'  •  '+m.lieu:'');
     document.getElementById('btn-del').style.display='block';
     fillForm(m);
+    showView(m);
   }
   document.getElementById('ov').style.display='block';
+  document.querySelector('#ov .modal').scrollIntoView({block:'start'});
 }
 function clearForm(){
   ['i-date','i-score','i-dom','i-ext','i-lieu','i-cote','i-notes'].forEach(function(id){document.getElementById(id).value='';});
@@ -844,7 +962,7 @@ function navModal(dir){
   if(_modalIdx<0)return;
   var ni=_modalIdx+dir;
   if(ni<0||ni>=_modalList.length)return;
-  openModal(_modalList[ni].id);
+  _modalNav=true;openModal(_modalList[ni].id);
 }
 function updateModalNav(){
   var pos=document.getElementById('m-pos');
@@ -891,7 +1009,7 @@ async function saveRec(){
       var idx=allData.findIndex(function(m){return m.id===editId;});if(idx>=0)allData[idx]=Object.assign({},allData[idx],rec);
     }
     _cacheSave(allData);
-    updateStats();applyF();if(_isClubView())applyClubF();closeModal();toast('&#10003; Sauvegard&#233;&#160;!');
+    updateStats();applyF();if(_isClubView())applyClubF();_rerenderCur();closeModal();toast('&#10003; Sauvegard&#233;&#160;!');
   }catch(e){toast('&#10060; '+e.message);}
   finally{if(sbtn){sbtn.disabled=false;sbtn.style.opacity='';}}
 }
@@ -901,7 +1019,7 @@ async function deleteRec(){
   if(r.error){toast('&#10060; '+r.error.message);return;}
   allData=allData.filter(function(m){return m.id!==editId;});
   _cacheSave(allData);
-  updateStats();applyF();if(_isClubView())applyClubF();closeModal();toast('&#128465; Supprim&#233;');
+  updateStats();applyF();if(_isClubView())applyClubF();_rerenderCur();closeModal();toast('&#128465; Supprim&#233;');
 }
 
 /* STATS */
@@ -2009,7 +2127,7 @@ async function toggleFav(id){
   var newVal=!m.favori;
   m.favori=newVal;
   // Update UI immediately
-  applyF();if(typeof applyClubF==='function')applyClubF();
+  applyF();if(typeof applyClubF==='function')applyClubF();_rerenderCur();if(document.getElementById('hunt').classList.contains('open'))huntSearch();
   try{
     await sb.from('programmes').update({favori:newVal}).eq('id',id);
     toast(newVal?'&#9733; Ajout\u00e9 aux favoris':'Retir\u00e9 des favoris');
@@ -2395,6 +2513,133 @@ async function backupAll(){
 }
 setTimeout(_bkMark,500);
 
+/* ===== FICHE VITRINE ===== */
+function _status(m){
+  if(m.sans_programme)return{c:'sp',t:'&#8709; Sans programme',bp:'s'};
+  if(m.programme)return m.quantite>1?{c:'dbl',t:'&#10003; D&#233;j&#224; eu<br>&#215;'+m.quantite+' doublon',bp:'y'}:{c:'ok',t:'&#10003; D&#233;j&#224; eu',bp:'y'};
+  return{c:'ko',t:'&#10007; Manquant',bp:'n'};
+}
+function showView(m){
+  var st=_status(m),v=document.getElementById('m-view');
+  var hero=m.image_couverture
+    ?'<img src="'+esc(m.image_couverture)+'" alt="Couverture du programme" onclick="openZoom(this.src,\'Couverture\')">'
+    :'<div class="ph">'+(m.categorie==='club'?'&#127942;':'&#127945;')+'</div>';
+  var bpTxt=m.sans_programme?'&#8709; Sans programme':(m.programme?'&#10003; Dans ma collection':'&#10007; Manquant');
+  var f=function(l,val){return val?'<div><span>'+l+'</span>'+esc(val)+'</div>':'';};
+  v.innerHTML='<div class="mv-hero">'+hero+'<div class="mv-st"><span class="bp '+st.bp+'">'+bpTxt+'</span></div></div>'
+    +'<div class="mv-b">'
+    +(m.score?'<div class="mv-score">'+esc(m.score)+'</div>':'')
+    +'<div class="mv-facts">'+f('Date',m.date)+f('Lieu',m.lieu)+f('Comp&#233;tition',m.type_match)+f('&#201;tat',m.etat)
+    +(m.quantite>1?'<div><span>Quantit&#233;</span>&#215;'+m.quantite+' (doublon)</div>':'')+f('Cote',m.cote)+'</div>'
+    +(m.notes?'<div class="mv-notes">'+esc(m.notes)+'</div>':'')
+    +(m.image_feuille?'<button class="mv-fdm" onclick="openZoom(\''+esc(m.image_feuille)+'\',\'Feuille de match\')"><img src="'+esc(m.image_feuille)+'" alt="">Feuille de match</button>':'')
+    +'<div class="mact" style="justify-content:space-between">'
+    +'<button class="btn-o" onclick="toggleFav('+m.id+');setTimeout(function(){showView(allData.filter(function(x){return x.id==='+m.id+';})[0]);},50)">'+(m.favori?'&#9733; Favori':'&#9734; Ajouter aux favoris')+'</button>'
+    +'<button class="btn" onclick="showEdit()">&#9998; Modifier</button></div>'
+    +'<div class="mv-hint">&#8592; Glisse pour passer au match suivant &#8594;</div>'
+    +'</div>';
+  v.style.display='block';document.getElementById('m-edit').style.display='none';
+}
+function showEdit(){document.getElementById('m-view').style.display='none';document.getElementById('m-edit').style.display='block';}
+// Balayage gauche/droite sur téléphone pour passer d'une fiche à l'autre
+(function(){
+  var ov=document.getElementById('ov'),x0=null,y0=0;
+  ov.addEventListener('touchstart',function(e){if(document.getElementById('m-view').style.display==='none'){x0=null;return;}x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
+  ov.addEventListener('touchend',function(e){if(x0===null)return;var dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)navModal(dx<0?1:-1);},{passive:true});
+})();
+function _rerenderCur(){if(_curTab==='home')renderHome();if(_curTab==='wall')renderWall();}
+
+/* ===== ACCUEIL ===== */
+function _decOf(m){var y=+m.year||+(String(m.date||'').slice(-4))||0;return y?Math.floor(y/10)*10:0;}
+function _byDate(a,b){return dn(a.date)-dn(b.date);}
+function _goDecade(d){switchTab(0);document.getElementById('f-y1').value=d;document.getElementById('f-y2').value=d+9;setProg('non');window.scrollTo(0,0);}
+function _goProg(v){switchTab(0);resetF();setProg(v);window.scrollTo(0,0);}
+function renderHome(){
+  var el=document.getElementById('home-content');if(!el)return;
+  if(!allData.length){el.innerHTML='<div class="no-res">Chargement&#8230;</div>';return;}
+  var fr=allData.filter(function(m){return m.categorie!=='club';}),cl=allData.filter(function(m){return m.categorie==='club';});
+  var own=fr.filter(function(m){return m.programme;}),miss=fr.filter(function(m){return !m.programme;});
+  var pct=fr.length?Math.round(own.length/fr.length*100):0;
+  var dbl=fr.reduce(function(s,m){return s+(m.programme&&m.quantite>1?m.quantite-1:0);},0);
+  var scans=fr.filter(function(m){return m.image_couverture;}).length;
+  var favMiss=miss.filter(function(m){return m.favori;}).sort(_byDate);
+  var clOwn=cl.filter(function(m){return m.programme;}).length;
+  // décennies
+  var D={};fr.forEach(function(m){var d=_decOf(m);if(!d)return;D[d]=D[d]||{t:0,o:0,miss:[]};D[d].t++;if(m.programme)D[d].o++;else D[d].miss.push(m);});
+  var decs=Object.keys(D).map(Number).sort(function(a,b){return a-b;});
+  var decHTML=decs.map(function(d){var x=D[d],p=x.t?Math.round(x.o/x.t*100):0;
+    return'<button class="dec" onclick="_goDecade('+d+')" title="Voir les manquants des ann&#233;es '+d+'"><span class="y">'+d+'s</span><span class="b"><div class="'+(p===100?'full':'')+'" style="width:'+p+'%"></div></span><span class="n">'+x.o+' / '+x.t+'</span></button>';}).join('');
+  // presque complètes : décennies avec 1 à 3 manquants
+  var near=[];decs.forEach(function(d){var x=D[d];if(x.miss.length>=1&&x.miss.length<=3)x.miss.forEach(function(m){near.push(m);});});
+  near.sort(_byDate);
+  var row=function(m,list){return'<button onclick="_openFrom('+m.id+',\''+list+'\')"><span>'+esc(m.match)+'</span><span class="d">'+esc(m.date)+'</span></button>';};
+  window._homeLists={fav:favMiss,near:near};
+  var recent=allData.filter(function(m){return m.programme&&m.image_couverture;}).sort(function(a,b){return b.id-a.id;}).slice(0,12);
+  window._homeLists.recent=recent;
+  el.innerHTML=
+    '<div class="h-hero"><div><div class="h-lbl">&#201;quipe de France</div><div class="h-big">'+own.length+' <small>/ '+fr.length+'</small></div></div>'
+    +'<div class="h-prog"><div class="h-lbl">Collection compl&#233;t&#233;e &#224; '+pct+' %</div><div class="h-bar"><div style="width:'+pct+'%"></div></div>'
+    +'<div style="font-size:13.5px;color:var(--gris)">Plus que <b style="color:var(--blanc)">'+miss.length+'</b> programmes &#224; trouver'+(cl.length?' &#183; Finales clubs : <b style="color:var(--blanc)">'+clOwn+' / '+cl.length+'</b>':'')+'</div></div></div>'
+    +'<div class="h-tiles">'
+    +'<button class="h-tile" onclick="_goProg(\'non\')"><div class="v" style="color:var(--ko)">'+miss.length+'</div><div class="l">Manquants</div></button>'
+    +'<button class="h-tile" onclick="_goProg(\'oui\');document.getElementById(\'srt\').value=\'dd\';applyF()"><div class="v" style="color:var(--or)">'+dbl+'</div><div class="l">Doublons &#224; &#233;changer</div></button>'
+    +'<button class="h-tile" onclick="switchTab(5)"><div class="v" style="color:#90b0f0">'+scans+'</div><div class="l">Couvertures scann&#233;es</div></button>'
+    +'<button class="h-tile" onclick="_goProg(\'fav\')"><div class="v" style="color:#ffd966">'+fr.filter(function(m){return m.favori;}).length+'</div><div class="l">Favoris</div></button>'
+    +'</div>'
+    +'<div class="h-grid"><div>'
+    +'<div class="h-card"><h3>Progression par d&#233;cennie</h3><div class="sub">Touche une d&#233;cennie pour voir ses manquants</div>'+decHTML+'</div>'
+    +'</div><div>'
+    +'<div class="h-card"><h3>&#9733; Recherch&#233;s en priorit&#233;</h3><div class="sub">Manquants marqu&#233;s en favori</div><div class="lst">'
+    +(favMiss.length?favMiss.slice(0,12).map(function(m){return row(m,'fav');}).join(''):'<div class="h-empty">Aucun pour l\'instant. Mets une &#233;toile sur un manquant pour le suivre ici.</div>')+'</div></div>'
+    +'<div class="h-card"><h3>Presque compl&#232;tes</h3><div class="sub">D&#233;cennies o&#249; il ne manque que 1 &#224; 3 programmes</div><div class="lst">'
+    +(near.length?near.slice(0,12).map(function(m){return row(m,'near');}).join(''):'<div class="h-empty">Aucune d&#233;cennie dans ce cas.</div>')+'</div></div>'
+    +'</div></div>'
+    +(recent.length?'<div class="h-card"><h3>Derniers ajouts</h3><div class="thumbs">'+recent.map(function(m){return'<button onclick="_openFrom('+m.id+',\'recent\')"><img src="'+esc(m.image_couverture)+'" loading="lazy" alt=""><span>'+esc(m.date)+'<br>'+esc(_adversaire(m)||m.match)+'</span></button>';}).join('')+'</div></div>':'');
+}
+function _openFrom(id,list){openModal(id,(window._homeLists||{})[list]||null);}
+
+/* ===== MUR DE COUVERTURES ===== */
+var _wallScope='france';
+function setWallScope(s){_wallScope=s;renderWall();}
+function renderWall(){
+  var el=document.getElementById('wall-content');if(!el)return;
+  if(!allData.length){el.innerHTML='<div class="no-res">Chargement&#8230;</div>';return;}
+  var list=allData.filter(function(m){return m.image_couverture&&((_wallScope==='club')===(m.categorie==='club'));}).sort(_byDate);
+  window._wallList=list;
+  var G={};list.forEach(function(m){var d=_decOf(m);(G[d]=G[d]||[]).push(m);});
+  var bar='<div class="w-bar"><div class="seg"><button class="'+(_wallScope!=='club'?'on':'')+'" onclick="setWallScope(\'france\')">&#127981; France</button><button class="'+(_wallScope==='club'?'on':'')+'" onclick="setWallScope(\'club\')">&#127942; Clubs</button></div>'
+    +'<span style="color:var(--gris);font-size:14px">'+list.length+' couvertures</span></div>';
+  if(!list.length){el.innerHTML=bar+'<div class="no-res">Aucune couverture scann&#233;e pour l\'instant.<br>Utilise &#171; Outils &#8250; Import scans &#187; pour en ajouter.</div>';return;}
+  el.innerHTML=bar+Object.keys(G).map(Number).sort(function(a,b){return a-b;}).map(function(d){
+    return'<div class="w-dec">'+(d?d+'s':'Sans date')+' <small>'+G[d].length+' programme'+(G[d].length>1?'s':'')+'</small></div><div class="w-grid">'
+      +G[d].map(function(m){return'<button onclick="openModal('+m.id+',window._wallList)" title="'+esc(m.match)+'"><img src="'+esc(m.image_couverture)+'" loading="lazy" decoding="async" alt=""><span><b>'+esc(m.date)+'</b>'+esc(_wallScope==='club'?m.match:(_adversaire(m)||m.match))+'</span></button>';}).join('')+'</div>';
+  }).join('');
+}
+
+/* ===== MODE CHASSE ===== */
+function openHunt(){var h=document.getElementById('hunt');h.classList.add('open');var q=document.getElementById('hunt-q');q.value='';huntSearch();setTimeout(function(){q.focus();},50);}
+function closeHunt(){document.getElementById('hunt').classList.remove('open');}
+function _huntKey(s){return nm(String(s||'')).replace(/[^a-z0-9]+/g,' ').trim();}
+function huntSearch(){
+  var q=_huntKey(document.getElementById('hunt-q').value),out=document.getElementById('hunt-res');
+  if(!q){out.innerHTML='<div class="hunt-help">Tape un adversaire, une ann&#233;e, un stade ou une date.<br>Exemples : <b>galles 1954</b>, <b>87 australie</b>, <b>colombes</b>.<br><br><span style="color:var(--ok)">&#10003; D&#233;j&#224; eu</span> &#183; <span style="color:var(--or)">&#215;2 doublon</span> &#183; <span style="color:var(--ko)">&#10007; Manquant</span></div>';return;}
+  var toks=q.split(' ');
+  var res=allData.filter(function(m){
+    var y=String(m.year||String(m.date||'').slice(-4));
+    var h=' '+_huntKey([m.match,m.date,m.lieu,m.type_match,m.domicile,m.exterieur,y,m.categorie==='club'?'club finale':''].join(' '))+' ';
+    return toks.every(function(t){
+      if(/^\d{2}$/.test(t))return y.slice(-2)===t;
+      return h.indexOf(t)>=0;
+    });
+  }).sort(_byDate);
+  window._huntList=res;
+  if(!res.length){out.innerHTML='<div class="hunt-help">Aucun match trouv&#233; pour &#171; '+esc(document.getElementById('hunt-q').value)+' &#187;.</div>';return;}
+  out.innerHTML=(res.length>60?'<div class="hunt-help" style="padding:4px 6px 10px">'+res.length+' r&#233;sultats, affine ta recherche (ex. ajoute l\'ann&#233;e)</div>':'')
+    +res.slice(0,60).map(function(m){var st=_status(m);
+      return'<button class="hr" onclick="openModal('+m.id+',window._huntList)"><span class="st '+st.c+'">'+st.t+'</span><span class="tx"><b>'+esc(m.match)+'</b><span>'+esc(m.date)+(m.lieu?' &#183; '+esc(m.lieu):'')+(m.categorie==='club'?' &#183; Club':'')+'</span></span></button>';}).join('');
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('hunt').classList.contains('open')&&document.getElementById('ov').style.display!=='block')closeHunt();},true);
+
 /* Librairies chargées à la demande */
 runExport=withLib('xlsx',runExport);
 vdFile=withLib('xlsx',vdFile);
@@ -2403,6 +2648,7 @@ vdExport=withLib('xlsx',vdExport);
 backupAll=withLib('xlsx',backupAll);
 initMap=withLib('leaflet',initMap);
 
+switchTab(4);
 loadAll();
 </script>
 </body>
