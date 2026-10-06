@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v2.2 - 2026-10-05 : accueil, mur, chasse, fiche vitrine -->
+<!-- v2.3 - 2026-10-06 : carte sans clé API -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -218,6 +218,7 @@ textarea.fi{resize:vertical;min-height:58px}
 .zoom-label{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:13px}
 .img-clickable{cursor:zoom-in;transition:opacity .2s}
 .img-clickable:hover{opacity:.85}
+.tiles-dark{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6)}
 
 /* ===== ACCUEIL (tableau de bord) ===== */
 .home-wrap,.wall-wrap{display:none;padding:20px 24px 40px;max-width:1180px;margin:0 auto}
@@ -1783,9 +1784,10 @@ function initMap() {
   var _scope=window._mapScope||'france';
   var _isClub=_scope==='club';
   _leafletMap = L.map('leaflet-map', {zoomControl:true}).setView([46.5, 5], 4);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-    maxZoom:18
+  // Fond OpenStreetMap (sans clé), assombri en CSS (.tiles-dark) : CARTO exige désormais une clé API
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom:18, className:'tiles-dark'
   }).addTo(_leafletMap);
 
   // Group matches by location
