@@ -1164,7 +1164,8 @@ function renderStatsFor(scope){
   // Complétude par adversaire (France) / par club (Club) — tableau complet triable
   (function(){
     var g={},cv=function(m){var v=parseFloat(String(m.cote||'').replace(/[^0-9.,]/g,'').replace(',','.'));return isNaN(v)?0:v;};
-    data.forEach(function(m){
+    var per=oppPer(),pd=data.filter(function(m){var y=parseInt(m.year)||0;return (!per.y1||y>=per.y1)&&(!per.y2||y<=per.y2);});
+    pd.forEach(function(m){
       var names=isClub?[m.domicile,m.exterieur]:[m.domicile==='France'?m.exterieur:m.domicile];
       names.forEach(function(n){
         n=(n||'').trim();if(!n||(!isClub&&n==='France'))return;
@@ -1178,12 +1179,23 @@ function renderStatsFor(scope){
     var arr=Object.keys(g).map(function(k){var o=g[k];o.m=o.t-o.h;o.p=o.t?o.h/o.t:0;return o;});
     var st=window._oppSort||{k:'t',asc:false};
     arr.sort(function(a,b){var x=a[st.k],y=b[st.k];if(st.k==='name'){x=nm(x);y=nm(y);}return (x<y?-1:x>y?1:0)*(st.asc?1:-1)||b.t-a.t;});
-    var tot={m:0,val:0};data.forEach(function(m){if(!m.programme){tot.m++;tot.val+=cv(m);}}); // compté par match (une finale de club concerne 2 clubs)
+    var tot={m:0,val:0};pd.forEach(function(m){if(!m.programme){tot.m++;tot.val+=cv(m);}}); // compté par match (une finale de club concerne 2 clubs)
     var th=function(k,l,al){var on=st.k===k;return '<th onclick="setOppSort(\''+k+'\')" style="padding:7px 8px;text-align:'+(al||'right')+';font-size:10px;text-transform:uppercase;letter-spacing:1px;cursor:pointer;white-space:nowrap;color:'+(on?'var(--or)':'var(--gris)')+'">'+l+(on?(st.asc?' &#8593;':' &#8595;'):'')+'</th>';};
     var homeL=isClub?'1er nomm&#233;':'&#192; domicile',awayL=isClub?'2e nomm&#233;':'&#192; l\'ext&#233;rieur';
     h+='<div style="background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:18px 20px;margin-bottom:20px">';
     h+='<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:10px"><div style="font-size:14px;font-weight:600;color:var(--blanc)">Compl&#233;tude par '+(isClub?'club':'adversaire')+'</div>'
       +'<div style="font-size:12px;color:var(--gris)">'+arr.length+' '+(isClub?'clubs':'adversaires')+' &bull; '+tot.m+' manquants &bull; valeur cot&#233;e des manquants : <b style="color:var(--or)">'+Math.round(tot.val).toLocaleString('fr-FR')+' &#8364;</b></div></div>';
+    (function(){
+      var cut=isClub?[1920,1945]:[1945,1960];
+      var pres=[['Tout','',''],['Avant '+cut[0],'',cut[0]-1],['Avant '+cut[1],'',cut[1]-1],[cut[0]+'&#8211;'+(cut[1]-1),cut[0],cut[1]-1],['Depuis '+cut[1],cut[1],'']];
+      var chip=function(l,a,b){var on=String(per.y1||'')===String(a)&&String(per.y2||'')===String(b);
+        return '<button onclick="setOppPer(\''+a+'\',\''+b+'\')" style="font-family:inherit;font-size:12px;padding:4px 10px;border-radius:14px;cursor:pointer;border:1px solid '+(on?'var(--or)':'var(--bord)')+';background:'+(on?'rgba(232,200,76,.15)':'transparent')+';color:'+(on?'var(--or)':'var(--gris)')+'">'+l+'</button>';};
+      h+='<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px"><span style="font-size:11px;color:var(--gris);text-transform:uppercase;letter-spacing:1px;margin-right:2px">P&#233;riode</span>';
+      pres.forEach(function(p){h+=chip(p[0],p[1],p[2]);});
+      var inp='width:58px;font-family:inherit;font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--bord);background:var(--carte2);color:var(--blanc)';
+      h+='<span style="font-size:12px;color:var(--gris);margin-left:6px">ou de</span><input id="opp-y1" inputmode="numeric" maxlength="4" placeholder="'+(isClub?'1892':'1906')+'" value="'+(per.y1||'')+'" style="'+inp+'" onchange="setOppPer(this.value,document.getElementById(\'opp-y2\').value)">'
+        +'<span style="font-size:12px;color:var(--gris)">&#224;</span><input id="opp-y2" inputmode="numeric" maxlength="4" placeholder="'+(isClub?'2025':'2026')+'" value="'+(per.y2||'')+'" style="'+inp+'" onchange="setOppPer(document.getElementById(\'opp-y1\').value,this.value)"></div>';
+    })();
     h+='<div style="overflow-x:auto;max-height:520px;overflow-y:auto;border:1px solid var(--bord);border-radius:6px"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead style="position:sticky;top:0;background:#0d1018"><tr>'
       +th('name',isClub?'Club':'Adversaire','left')+th('t','Matchs')+th('h','Poss&#233;d&#233;s')+th('m','Manquants')+th('p','%')
       +'<th style="padding:7px 8px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gris);white-space:nowrap">'+homeL+'</th>'
@@ -1191,7 +1203,7 @@ function renderStatsFor(scope){
       +th('val','Valeur manq.')+'</tr></thead><tbody>';
     arr.forEach(function(o){
       var p=Math.round(o.p*100),col=p>=70?'#5de895':p>=40?'var(--or)':'#e06060';
-      h+='<tr style="border-top:1px solid rgba(42,48,64,.5);cursor:pointer" onclick="filterFromStats(\''+(isClub?'club':'opp')+'\',\''+o.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" title="Voir ces matchs">'
+      h+='<tr style="border-top:1px solid rgba(42,48,64,.5);cursor:pointer" onclick="filterFromStats(\''+(isClub?'club':'opp')+'\',\''+o.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\',1)" title="Voir ces matchs">'
         +'<td style="padding:6px 8px;color:var(--blanc);font-weight:600">'+o.name+'</td>'
         +'<td style="padding:6px 8px;text-align:right;color:var(--gris)">'+o.t+'</td>'
         +'<td style="padding:6px 8px;text-align:right">'+o.h+'</td>'
@@ -1201,7 +1213,7 @@ function renderStatsFor(scope){
         +'<td style="padding:6px 8px;text-align:right;color:var(--gris)">'+o.eh+'/'+o.et+'</td>'
         +'<td style="padding:6px 8px;text-align:right;color:var(--or);white-space:nowrap">'+(o.val?Math.round(o.val).toLocaleString('fr-FR')+' &#8364;':'')+(o.nc&&o.m?'<span style="color:var(--gris);font-size:11px"> +'+o.nc+' NC</span>':'')+'</td></tr>';
     });
-    h+='</tbody></table></div><div style="font-size:11px;color:var(--gris);margin-top:6px">Clique un en-t&#234;te pour trier, une ligne pour voir les matchs. NC = manquant sans cote.</div></div>';
+    h+='</tbody></table></div><div style="font-size:11px;color:var(--gris);margin-top:6px">Clique un en-t&#234;te pour trier, une ligne pour voir les matchs (sur la p&#233;riode choisie). NC = manquant sans cote.</div></div>';
   })();
 
   // Two columns: opponents (France) + old missing
@@ -2075,10 +2087,13 @@ function toggleMobileClubFilters(){
 
 
 /* Filtrer depuis les stats (clic sur barre) */
+function oppPer(){var s=window._statsScope||'france',p=(window._oppPerS||{})[s]||{};return {y1:parseInt(p.y1)||0,y2:parseInt(p.y2)||0};}
+function setOppPer(a,b){var s=window._statsScope||'france';window._oppPerS=window._oppPerS||{};window._oppPerS[s]={y1:parseInt(a)||0,y2:parseInt(b)||0};renderStatsFor(s);}
 function setOppSort(k){var s=window._oppSort||{k:'t',asc:false};window._oppSort={k:k,asc:s.k===k?!s.asc:(k==='name')};renderStatsFor(window._statsScope||'france');}
 
-function filterFromStats(type, value){
+function filterFromStats(type, value, usePer){
   var isClub = (window._statsScope==='club');
+  var pp=usePer?oppPer():null;
   // Reset filters first
   if(isClub){
     if(typeof resetClubF==='function')resetClubF();
@@ -2110,14 +2125,18 @@ function filterFromStats(type, value){
     switchTab(3);
     setTimeout(function(){
       var ct=document.getElementById('cf-t');
-      if(ct)ct.value=value;applyClubF();window.scrollTo(0,0);
+      if(ct)ct.value=value;
+      if(pp){var a=document.getElementById('cf-y1'),b=document.getElementById('cf-y2');if(a)a.value=pp.y1||'';if(b)b.value=pp.y2||'';}
+      applyClubF();window.scrollTo(0,0);
     },100);
   } else if(type==='opp'){
     // Opponent filter (France)
     switchTab(0);
     setTimeout(function(){
       var ft=document.getElementById('f-t');
-      if(ft)ft.value=value;applyF();window.scrollTo(0,0);
+      if(ft)ft.value=value;
+      if(pp){var a=document.getElementById('f-y1'),b=document.getElementById('f-y2');if(a)a.value=pp.y1||'';if(b)b.value=pp.y2||'';}
+      applyF();window.scrollTo(0,0);
     },100);
   }
 }
