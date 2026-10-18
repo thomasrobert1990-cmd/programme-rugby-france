@@ -328,6 +328,7 @@ textarea.fi{resize:vertical;min-height:58px}
   <button class="hbtn hunt-btn" onclick="openHunt()" title="Mode chasse : est-ce que je l'ai d&#233;j&#224; ?" aria-label="Mode chasse" style="color:var(--or)">&#128269;</button>
   <button class="hbtn" onclick="backupData()" title="Sauvegarder la base (téléchargement)" aria-label="Sauvegarder la base" style="color:var(--ok)">&#128190;</button>
   <button class="hbtn" onclick="forceUpdate()" title="Mettre à jour l'app" aria-label="Mettre à jour l'app">&#8635;</button>
+  <button class="hbtn" id="auth-btn" onclick="openAuth()" title="Connexion" aria-label="Connexion">&#128274;</button>
 </header>
 
 <div class="tabs-nav">
@@ -666,7 +667,7 @@ function shrinkImage(dataUrl,max){
       var r=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');
       c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);
       c.getContext('2d').drawImage(im,0,0,c.width,c.height);
-      c.toBlob(function(b){ok(b);},'image/jpeg',0.85);
+      c.toBlob(function(b){ok(b);},'image/jpeg',0.8);
     };im.onerror=function(){ok(null);};im.src=dataUrl;
   });
 }
@@ -678,6 +679,55 @@ async function storeImage(dataUrl,id,kind){
   if(up.error)throw up.error;
   return sb.storage.from('programmes').getPublicUrl(path).data.publicUrl;
 }
+
+/* CONNEXION — seules les personnes connectées peuvent modifier la base (lecture libre) */
+var _user=null;
+function authBtn(){var b=document.getElementById('auth-btn');if(!b)return;b.innerHTML=_user?'&#128275;':'&#128274;';b.title=_user?'Connect\u00e9 : '+_user.email:'Se connecter pour modifier';b.style.color=_user?'var(--ok)':'';}
+async function authInit(){
+  try{var r=await sb.auth.getSession();_user=r.data&&r.data.session?r.data.session.user:null;}catch(e){}
+  authBtn();
+  sb.auth.onAuthStateChange(function(ev,ses){_user=ses?ses.user:null;authBtn();});
+}
+async function needAuth(){
+  if(_user)return true;
+  try{var r=await sb.auth.getSession();_user=r.data&&r.data.session?r.data.session.user:null;}catch(e){}
+  if(_user){authBtn();return true;}
+  toast('&#128274; Connecte-toi pour modifier la collection');openAuth();return false;
+}
+function closeAuth(){var o=document.getElementById('auth-ov');if(o)o.remove();}
+function openAuth(){
+  closeAuth();
+  var body=_user
+    ?'<p style="margin:0 0 14px">Connect\u00e9 : <b>'+esc(_user.email)+'</b></p><button class="btn" onclick="authOut()">Se d\u00e9connecter</button>'
+    :'<p style="margin:0 0 12px;font-size:13px;color:var(--gris)">La consultation reste libre. Pour ajouter ou modifier des matchs, connecte-toi.</p>'
+     +'<input class="fi" id="au-mail" type="email" placeholder="Email" autocomplete="username" style="width:100%;margin-bottom:8px">'
+     +'<input class="fi" id="au-pw" type="password" placeholder="Mot de passe" autocomplete="current-password" style="width:100%;margin-bottom:12px">'
+     +'<div id="au-msg" style="font-size:13px;min-height:18px;margin-bottom:8px"></div>'
+     +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="authIn()">Se connecter</button>'
+     +'<button class="btn-o" onclick="authUp()">Cr\u00e9er mon acc\u00e8s</button></div>';
+  document.body.insertAdjacentHTML('beforeend','<div id="auth-ov" onclick="if(event.target===this)closeAuth()" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px">'
+    +'<div style="background:#14204a;color:#fff;border-radius:12px;padding:20px;width:100%;max-width:360px;box-shadow:0 10px 40px rgba(0,0,0,.5)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">&#128274; Connexion</b><button class="btn-o" onclick="closeAuth()">&#10005;</button></div>'
+    +body+'</div></div>');
+}
+function _auMsg(t,ok){var m=document.getElementById('au-msg');if(m){m.textContent=t;m.style.color=ok?'var(--ok)':'#ff8080';}}
+async function authIn(){
+  var e=document.getElementById('au-mail').value.trim(),p=document.getElementById('au-pw').value;
+  if(!e||!p){_auMsg('Email et mot de passe obligatoires.');return;}
+  var r=await sb.auth.signInWithPassword({email:e,password:p});
+  if(r.error){_auMsg(/confirm/i.test(r.error.message)?'Confirme d\u2019abord ton email (lien re\u00e7u par mail).':'Connexion refus\u00e9e : '+r.error.message);return;}
+  _user=r.data.user;authBtn();closeAuth();toast('&#128275; Connect\u00e9');
+}
+async function authUp(){
+  var e=document.getElementById('au-mail').value.trim(),p=document.getElementById('au-pw').value;
+  if(!e||p.length<8){_auMsg('Email et mot de passe (8 caract\u00e8res minimum) obligatoires.');return;}
+  var r=await sb.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+location.pathname}});
+  if(r.error){_auMsg('Cr\u00e9ation refus\u00e9e : '+r.error.message);return;}
+  if(r.data.session){_user=r.data.user;authBtn();closeAuth();toast('&#128275; Acc\u00e8s cr\u00e9\u00e9, tu es connect\u00e9');}
+  else _auMsg('Acc\u00e8s cr\u00e9\u00e9. Clique sur le lien re\u00e7u par email, puis reviens ici te connecter.',true);
+}
+async function authOut(){await sb.auth.signOut();_user=null;authBtn();closeAuth();toast('D\u00e9connect\u00e9');}
+setTimeout(authInit,0);
 
 /* TAB SWITCH */
 var _curTab=4;
@@ -1022,6 +1072,7 @@ function updateModalNav(){
 function closeOv(e){if(e.target===document.getElementById('ov'))closeModal();}
 
 async function saveRec(){
+  if(!(await needAuth()))return;
   var date=document.getElementById('i-date').value.trim(),dom=document.getElementById('i-dom').value.trim();
   if(!date||!dom){alert('Date et équipe domicile obligatoires.');return;}
   var ext=document.getElementById('i-ext').value.trim(),p=date.split('/'),year=p.length===3?p[2]:'';
@@ -1056,6 +1107,7 @@ async function saveRec(){
   finally{if(sbtn){sbtn.disabled=false;sbtn.style.opacity='';}}
 }
 async function deleteRec(){
+  if(!(await needAuth()))return;
   if(!confirm('Supprimer ?'))return;
   var r=await sb.from('programmes').delete().eq('id',editId);
   if(r.error){toast('&#10060; '+r.error.message);return;}
@@ -1475,6 +1527,7 @@ function impTable(){
 }
 
 async function impUpload(){
+  if(!(await needAuth()))return;
   var todo=impRes.filter(function(r){return r.m&&r.s!=='er';});
   if(!todo.length){alert('Aucun fichier correspondant.');return;}
   document.getElementById('imp-btn-up').disabled=true;
@@ -1488,7 +1541,11 @@ async function impUpload(){
     var ext=r.f.name.split('.').pop().toLowerCase();
     var path='match_'+r.m.id+'_'+r.t+'.'+ext;
     try{
-      var up=await sb.storage.from('programmes').upload(path,r.f.file,{contentType:'image/jpeg',upsert:true});
+      // Scan réduit (1600 px, JPEG) avant envoi : ~3 fois moins de place dans le stockage gratuit (1 Go)
+      var body=r.f.file;
+      try{var du=await new Promise(function(ok,ko){var fr=new FileReader();fr.onload=function(e){ok(e.target.result);};fr.onerror=ko;fr.readAsDataURL(r.f.file);});
+        var sm=await shrinkImage(du,1600);if(sm&&sm.size<r.f.file.size){body=sm;path=path.replace(/\.[a-z0-9]+$/i,'.jpg');}}catch(e){}
+      var up=await sb.storage.from('programmes').upload(path,body,{contentType:'image/jpeg',upsert:true});
       if(up.error)throw up.error;
       var pu=sb.storage.from('programmes').getPublicUrl(path);
       var url=pu.data.publicUrl;
@@ -2184,6 +2241,7 @@ function filterFromStats(type, value, usePer){
 
 /* FAVORIS */
 async function toggleFav(id){
+  if(!(await needAuth()))return;
   var m=allData.filter(function(x){return x.id===id;})[0];
   if(!m)return;
   var newVal=!m.favori;
@@ -2504,6 +2562,7 @@ function openQC(){
 function qcToggle(id,v){window._qcOpen=window._qcOpen||{};window._qcOpen[id]=v;openQC();}
 
 async function qcApply(item){
+  if(!_user&&!(await needAuth()))throw new Error('Connexion requise');
   var r=await sb.from('programmes').update(item.ch).eq('id',item.m.id);
   if(r.error)throw r.error;
   Object.keys(item.ch).forEach(function(k){item.m[k]=item.ch[k];});
