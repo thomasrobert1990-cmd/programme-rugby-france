@@ -682,14 +682,16 @@ async function storeImage(dataUrl,id,kind){
 
 /* CONNEXION — seules les personnes connectées peuvent modifier la base (lecture libre) */
 var _user=null;
-function authBtn(){var b=document.getElementById('auth-btn');if(!b)return;b.innerHTML=_user?'&#128275;':'&#128274;';b.title=_user?'Connect\u00e9 : '+_user.email:'Se connecter pour modifier';b.style.color=_user?'var(--ok)':'';}
+// Verrouillage désactivé pour l'instant (usage personnel sur le Mac) : passer à true pour exiger la connexion avant toute modification
+var AUTH_REQUIRED=false;
+function authBtn(){var b=document.getElementById('auth-btn');if(!b)return;b.style.display=AUTH_REQUIRED||_user?'':'none';b.innerHTML=_user?'&#128275;':'&#128274;';b.title=_user?'Connect\u00e9 : '+_user.email:'Se connecter pour modifier';b.style.color=_user?'var(--ok)':'';}
 async function authInit(){
   try{var r=await sb.auth.getSession();_user=r.data&&r.data.session?r.data.session.user:null;}catch(e){}
   authBtn();
   sb.auth.onAuthStateChange(function(ev,ses){_user=ses?ses.user:null;authBtn();});
 }
 async function needAuth(){
-  if(_user)return true;
+  if(!AUTH_REQUIRED||_user)return true;
   try{var r=await sb.auth.getSession();_user=r.data&&r.data.session?r.data.session.user:null;}catch(e){}
   if(_user){authBtn();return true;}
   toast('&#128274; Connecte-toi pour modifier la collection');openAuth();return false;
