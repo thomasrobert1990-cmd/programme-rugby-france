@@ -2511,9 +2511,6 @@ function qcRun(){
   // 5. Date invalide
   add('date','Date invalide ou année incohérente','Format attendu : JJ/MM/AAAA.',
     allData.filter(function(m){var p=String(m.date||'').split('/');return p.length!==3||p[2].length!==4||+p[1]<1||+p[1]>12||+p[0]<1||+p[0]>31||(m.year&&String(m.year)!==p[2]);}).map(function(m){return {m:m,txt:'Date « '+(m.date||'')+' », année « '+(m.year||'')+' »'};}),false);
-  // 6. Quantités élevées
-  add('qte','Quantité de 3 ou plus','À confirmer : vrais exemplaires ou erreur de saisie (comme Italie – France 1991) ?',
-    allData.filter(function(m){return (+m.quantite||0)>=3;}).map(function(m){return {m:m,txt:'Quantité '+m.quantite};}),false);
   // 8. Possédé sans scan
   add('noscan','Possédé sans scan de couverture','À scanner pour compléter la collection.',
     allData.filter(function(m){return m.programme&&!(m.image_couverture||'').trim();}).map(function(m){return {m:m,txt:'Pas de couverture'};}),false);

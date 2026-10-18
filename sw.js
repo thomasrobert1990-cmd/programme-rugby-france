@@ -1,5 +1,5 @@
 // Service Worker - Ma Collection Rugby
-const CACHE = 'rugby-v37';
+const CACHE = 'rugby-v38';
 const IMG_CACHE = 'rugby-img-v1'; // images conservées d'une version à l'autre
 const ASSETS = ['./', './index.html', './manifest.json'];
 
