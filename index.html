@@ -2517,6 +2517,9 @@ function qcRun(){
   // 8. Possédé sans scan
   add('noscan','Possédé sans scan de couverture','À scanner pour compléter la collection.',
     allData.filter(function(m){return m.programme&&!(m.image_couverture||'').trim();}).map(function(m){return {m:m,txt:'Pas de couverture'};}),false);
+  // 8 bis. Possédé sans cote
+  add('nocote','Possédé sans cote','Programme dans ta collection mais sans valeur estimée. Ouvre la fiche pour ajouter la cote.',
+    allData.filter(function(m){return m.programme&&!(m.cote||'').trim();}).map(function(m){return {m:m,txt:'Pas de cote'};}),false);
   // 9. Champs vides
   add('vide','Informations manquantes','Score (matchs déjà joués), lieu ou équipe non renseignés.',
     allData.map(function(m){var t=[];if(!(m.lieu||'').trim())t.push('lieu');if(!(m.domicile||'').trim()||!(m.exterieur||'').trim())t.push('équipe');if(!(m.score||'').trim()&&qcPast(m))t.push('score');return t.length?{m:m,txt:'Sans '+t.join(', ')}:null;}).filter(Boolean),false);
