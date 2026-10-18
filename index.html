@@ -661,13 +661,13 @@ function cardHTML(m,club){
 }
 // Photo prise dans la fiche : redimensionnée (1600 px max, JPEG) puis envoyée dans le stockage Supabase
 // au lieu d'être stockée en base64 dans la ligne (ce qui alourdissait chaque chargement de la collection)
-function shrinkImage(dataUrl,max){
+function shrinkImage(dataUrl,max,q){
   return new Promise(function(ok){
     var im=new Image();im.onload=function(){
       var r=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');
       c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);
       c.getContext('2d').drawImage(im,0,0,c.width,c.height);
-      c.toBlob(function(b){ok(b);},'image/jpeg',0.8);
+      c.toBlob(function(b){ok(b);},'image/jpeg',q||0.85);
     };im.onerror=function(){ok(null);};im.src=dataUrl;
   });
 }
@@ -1543,10 +1543,10 @@ async function impUpload(){
     var ext=r.f.name.split('.').pop().toLowerCase();
     var path='match_'+r.m.id+'_'+r.t+'.'+ext;
     try{
-      // Scan réduit (1600 px, JPEG) avant envoi : ~3 fois moins de place dans le stockage gratuit (1 Go)
+      // Scan allégé seulement s'il est très grand (> 2600 px) : même définition que les scans actuels, qualité JPEG 0,9 (aucune perte visible)
       var body=r.f.file;
       try{var du=await new Promise(function(ok,ko){var fr=new FileReader();fr.onload=function(e){ok(e.target.result);};fr.onerror=ko;fr.readAsDataURL(r.f.file);});
-        var sm=await shrinkImage(du,1600);if(sm&&sm.size<r.f.file.size){body=sm;path=path.replace(/\.[a-z0-9]+$/i,'.jpg');}}catch(e){}
+        var sm=await shrinkImage(du,2600,0.9);if(sm&&sm.size<r.f.file.size*0.85){body=sm;path=path.replace(/\.[a-z0-9]+$/i,'.jpg');}}catch(e){}
       var up=await sb.storage.from('programmes').upload(path,body,{contentType:'image/jpeg',upsert:true});
       if(up.error)throw up.error;
       var pu=sb.storage.from('programmes').getPublicUrl(path);
