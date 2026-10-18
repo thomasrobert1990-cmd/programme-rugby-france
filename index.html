@@ -369,6 +369,7 @@ textarea.fi{resize:vertical;min-height:58px}
     </div></div>
     <div class="fg"><span class="fl">&#201;tat</span><select id="f-e"><option value="">Tous</option><option>Excellent</option><option>Tr&#232;s bon</option><option>Bon</option><option>Moyen</option><option>Mauvais</option></select></div>
     <div class="fg"><span class="fl">Comp&#233;tition</span><select id="f-comp" onchange="applyF()"><option value="">Toutes</option></select></div>
+    <div class="fg"><span class="fl">Tourn&#233;e</span><select id="f-tour" onchange="applyF()"><option value="">Toutes</option></select></div>
     <div class="fg"><span class="fl">Lieu</span><input type="text" id="f-l" placeholder="France, Twickenham..."></div>
     <button class="btn-reset" onclick="resetF()">&#10005; Effacer</button>
   </aside>
@@ -518,6 +519,7 @@ textarea.fi{resize:vertical;min-height:58px}
         <div><span class="fl2">&#201;tat</span><select class="fi" id="i-etat"><option value="">&#8212;</option><option>Excellent</option><option>Tr&#232;s bon</option><option>Bon</option><option>Moyen</option><option>Mauvais</option></select></div>
         <div><span class="fl2">Comp&#233;tition</span><input class="fi" id="i-type" list="complist" placeholder="Choisir ou taper..." autocomplete="off"><datalist id="complist"></datalist></div>
         <div><span class="fl2">Cote</span><input class="fi" type="text" id="i-cote" placeholder="45 &#8364;"></div>
+        <div class="full"><span class="fl2">Tourn&#233;e</span><select class="fi" id="i-tour"><option value="">&#8212; Aucune</option></select></div>
         <div class="full"><span class="fl2">Notes</span><textarea class="fi" id="i-notes" placeholder="D&#233;dicaces, provenance..."></textarea></div>
       </div>
       <div class="imgrow">
@@ -721,9 +723,38 @@ async function loadAll(){
     return;
   }
   allData=rows;_cacheSave(rows);
+  await loadTournees();
   _refreshAll();
   setTimeout(function(){if(typeof qcBadge==='function')qcBadge();},300);
 }
+
+// Tournées de l'équipe de France (table « tournees », reliée par programmes.tournee_id)
+var tournees={};
+function tourLabel(id){var t=tournees[id];return t?t.annee+' — '+t.libelle+' ('+t.saison+')':'';}
+async function loadTournees(){
+  try{
+    var r=await sb.from('tournees').select('*').order('annee',{ascending:true});
+    if(r.error)throw r.error;
+    tournees={};(r.data||[]).forEach(function(t){tournees[t.id]=t;});
+    try{localStorage.setItem('rugby_tournees_v1',JSON.stringify(r.data||[]));}catch(e){}
+  }catch(e){
+    try{(JSON.parse(localStorage.getItem('rugby_tournees_v1')||'[]')).forEach(function(t){tournees[t.id]=t;});}catch(e2){}
+  }
+  fillTourSelects();
+}
+function fillTourSelects(){
+  var ids=Object.keys(tournees).sort(function(a,b){return tournees[a].annee-tournees[b].annee;});
+  var cnt={};allData.forEach(function(m){if(m.tournee_id)cnt[m.tournee_id]=(cnt[m.tournee_id]||0)+1;});
+  var f=document.getElementById('f-tour');
+  if(f){var fv=f.value;f.length=1;
+    var oa=document.createElement('option');oa.value='*';oa.textContent='Tous les matchs de tourn\u00e9e';f.appendChild(oa);
+    ['\u00e9t\u00e9','automne'].forEach(function(sa){var o=document.createElement('option');o.value='s:'+sa;o.textContent='Tourn\u00e9es d\u2019'+(sa==='automne'?'automne':'\u00e9t\u00e9');f.appendChild(o);});
+    ids.forEach(function(id){var o=document.createElement('option');o.value=id;o.textContent=tourLabel(id)+(cnt[id]?' · '+cnt[id]:'');f.appendChild(o);});
+    f.value=fv;}
+  var e=document.getElementById('i-tour');
+  if(e){var ev=e.value;e.length=1;ids.forEach(function(id){var o=document.createElement('option');o.value=id;o.textContent=tourLabel(id);e.appendChild(o);});e.value=ev;}
+}
+(function(){try{(JSON.parse(localStorage.getItem('rugby_tournees_v1')||'[]')).forEach(function(t){tournees[t.id]=t;});}catch(e){}})();
 
 function buildTeams(){
   // France dropdown: only teams from France matches (non-club)
@@ -757,7 +788,7 @@ function buildTeams(){
   if(dl){
     dl.innerHTML='';
     // Predefined + existing values merged
-    var preset=['Test match','Tournoi des 5 Nations','Tournoi des 6 Nations','Coupe du Monde','Championnat des Nations','Tourn\u00e9e','Tourn\u00e9e d\'automne','Match amical','Coupe FIRA / Europe','Coupe Latine','Jeux Olympiques','Autre'];
+    var preset=['Test match','Tournoi des 5 Nations','Tournoi des 6 Nations','Coupe du Monde','Championnat des Nations','Tourn\u00e9e','Autumn Nations Cup','Match amical','Coupe FIRA / Europe','Coupe Latine','Jeux Olympiques','Autre'];
     var allComps={};
     preset.forEach(function(p){allComps[p]=1;});
     Object.keys(comps).forEach(function(p){allComps[p]=1;});
@@ -833,8 +864,14 @@ function applyF(){
     if(e&&m.etat!==e)return false;
     var comp=(document.getElementById('f-comp')||{}).value||'';
     if(comp&&m.type_match!==comp)return false;
+    var tr=(document.getElementById('f-tour')||{}).value||'';
+    if(tr){
+      if(!m.tournee_id)return false;
+      if(tr.indexOf('s:')===0){var tt=tournees[m.tournee_id];if(!tt||tt.saison!==tr.slice(2))return false;}
+      else if(tr!=='*'&&String(m.tournee_id)!==tr)return false;
+    }
     if(l&&nm(m.lieu||'').indexOf(l)<0)return false;
-    if(s){var h=nm((m.match||'')+' '+(m.date||'')+' '+(m.lieu||'')+' '+(m.score||'')+' '+(m.notes||''));if(h.indexOf(s)<0)return false;}
+    if(s){var h=nm((m.match||'')+' '+(m.date||'')+' '+(m.lieu||'')+' '+(m.score||'')+' '+(m.notes||'')+' '+tourLabel(m.tournee_id));if(h.indexOf(s)<0)return false;}
     return true;
   });
   filtered.sort(function(a,b){
@@ -848,6 +885,7 @@ function applyF(){
 
 function resetF(){
   var fc=document.getElementById('f-comp');if(fc)fc.value='';
+  var ft=document.getElementById('f-tour');if(ft)ft.value='';
   ['f-s','f-y1','f-y2','f-l'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('f-t').value='';document.getElementById('f-e').value='';
   setProg('all');
@@ -935,6 +973,7 @@ function openModal(id,list){
 function clearForm(){
   ['i-date','i-score','i-dom','i-ext','i-lieu','i-cote','i-notes'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('i-prog').value='0';document.getElementById('i-etat').value='';document.getElementById('i-type').value='';document.getElementById('i-qty').value='0';
+  var it=document.getElementById('i-tour');if(it)it.value='';
   setImg('c','');setImg('f','');
 }
 function fillForm(m){
@@ -943,6 +982,7 @@ function fillForm(m){
   document.getElementById('i-lieu').value=m.lieu||'';document.getElementById('i-prog').value=m.sans_programme?'2':(m.programme?'1':'0');
   document.getElementById('i-etat').value=m.etat||'';document.getElementById('i-type').value=m.type_match||'';document.getElementById('i-cote').value=m.cote||'';
   document.getElementById('i-qty').value=m.quantite||0;document.getElementById('i-notes').value=m.notes||'';
+  var it=document.getElementById('i-tour');if(it)it.value=m.tournee_id?String(m.tournee_id):'';
   iC=m.image_couverture||'';iF=m.image_feuille||'';setImg('c',iC);setImg('f',iF);
 }
 function setImg(t,src){
@@ -993,6 +1033,7 @@ async function saveRec(){
     type_match:document.getElementById('i-type').value,
     cote:document.getElementById('i-cote').value.trim(),quantite:+document.getElementById('i-qty').value||0,
     notes:document.getElementById('i-notes').value.trim(),image_couverture:iC,image_feuille:iF};
+  var itv=(document.getElementById('i-tour')||{}).value;rec.tournee_id=itv?+itv:null;
   var sbtn=document.querySelector('#ov .mact .btn');if(sbtn){sbtn.disabled=true;sbtn.style.opacity=.6;}
   try{
     var rid=editId===null?(allData.length?Math.max.apply(null,allData.map(function(m){return m.id;}))+1:1):editId;
@@ -2513,7 +2554,9 @@ async function backupAll(){
   }
   var d=new Date(),stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   // 1) JSON complet (toutes les colonnes, pour restauration)
-  var payload={app:'programme-rugby-france',table:'programmes',date:d.toISOString(),count:rows.length,rows:rows};
+  var tr=await sb.from('tournees').select('*').order('annee',{ascending:true});
+  var tours=(tr&&tr.data)||[];
+  var payload={app:'programme-rugby-france',table:'programmes',date:d.toISOString(),count:rows.length,rows:rows,tournees:tours};
   var blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
   var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='rugby_sauvegarde_'+stamp+'.json';a.click();
   setTimeout(function(){URL.revokeObjectURL(u);},2000);
@@ -2526,6 +2569,7 @@ async function backupAll(){
       var sub=rows.filter(s[1]).map(function(m){var o={};keys.forEach(function(k){var v=m[k];o[k]=(v&&typeof v==='object')?JSON.stringify(v):(v==null?'':v);});return o;});
       if(sub.length){var ws=XLSX.utils.json_to_sheet(sub,{header:keys});ws['!autofilter']={ref:ws['!ref']};XLSX.utils.book_append_sheet(wb,ws,s[0]);}
     });
+    if(tours.length){var wt=XLSX.utils.json_to_sheet(tours);XLSX.utils.book_append_sheet(wb,wt,'Tourn\u00e9es');}
     setTimeout(function(){XLSX.writeFile(wb,'rugby_sauvegarde_'+stamp+'.xlsx');},600);
   }catch(e){console.warn('Excel sauvegarde',e);}
   try{localStorage.setItem('rugby_last_backup',String(Date.now()));}catch(e){}
@@ -2550,7 +2594,7 @@ function showView(m){
   v.innerHTML='<div class="mv-hero">'+hero+'<div class="mv-st"><span class="bp '+st.bp+'">'+bpTxt+'</span></div></div>'
     +'<div class="mv-b">'
     +(m.score?'<div class="mv-score">'+esc(m.score)+'</div>':'')
-    +'<div class="mv-facts">'+f('Date',m.date)+f('Lieu',m.lieu)+f('Comp&#233;tition',m.type_match)+f('&#201;tat',m.etat)
+    +'<div class="mv-facts">'+f('Date',m.date)+f('Lieu',m.lieu)+f('Comp&#233;tition',m.type_match)+f('Tourn&#233;e',tourLabel(m.tournee_id))+f('&#201;tat',m.etat)
     +(m.quantite>1?'<div><span>Quantit&#233;</span>&#215;'+m.quantite+' (doublon)</div>':'')+f('Cote',m.cote)+'</div>'
     +(m.notes?'<div class="mv-notes">'+esc(m.notes)+'</div>':'')
     +(m.image_feuille?'<button class="mv-fdm" onclick="openZoom(\''+esc(m.image_feuille)+'\',\'Feuille de match\')"><img src="'+esc(m.image_feuille)+'" alt="">Feuille de match</button>':'')
